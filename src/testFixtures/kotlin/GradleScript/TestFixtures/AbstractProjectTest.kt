@@ -47,14 +47,8 @@ fun ROOTPROJECT_SETTINGS(name: String, directory: File, rootBuild: Boolean, chil
 }
 fun ROOTPROJECT_BUILD(name: String): String {
 	return """
-		import GradleScript.Common
-		
 		plugins {
 			id 'java'
-		}
-		
-		Common.context(this) {
-			Common.construct()
 		}
 	"""
 }

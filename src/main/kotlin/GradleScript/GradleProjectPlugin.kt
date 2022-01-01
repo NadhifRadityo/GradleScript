@@ -5,6 +5,8 @@ import org.gradle.api.Project
 
 class GradleProjectPlugin: Plugin<Project> {
 	override fun apply(target: Project) {
-
+		Common.context(target) {
+			Common.construct()
+		}
 	}
 }

@@ -74,6 +74,16 @@ tasks.withType<Test> {
         events("STARTED", "PASSED", "SKIPPED", "FAILED")
     }
 }
+tasks.withType<Jar> {
+    archiveFileName.convention(provider {
+        var name = archiveBaseName.getOrNull() ?: ""
+        val classifier = archiveClassifier.getOrNull()
+        val extension = archiveExtension.getOrNull()
+        if(GUtil.isTrue(classifier)) name += "-$classifier"
+        if(GUtil.isTrue(extension)) name += ".$extension"
+        name
+    })
+}
 
 gradlePlugin {
     plugins {
