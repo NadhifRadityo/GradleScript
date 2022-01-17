@@ -15,6 +15,7 @@ import GradleScript.GroovyKotlinInteroperability.KotlinClosure
 import GradleScript.GroovyKotlinInteroperability.parseProperty
 import GradleScript.Strategies.CommonUtils.purgeThreadLocal
 import GradleScript.Strategies.GradleUtils.asBuildProject0
+import GradleScript.Strategies.GradleUtils.extraPropertiesRemoveKey
 import GradleScript.Strategies.KeywordsUtils
 import GradleScript.Strategies.KeywordsUtils.being
 import GradleScript.Strategies.KeywordsUtils.with
@@ -113,6 +114,9 @@ object Scripting {
 		} else if(scriptObj is String && scriptObj.startsWith('/')) {
 			build = null
 			scriptFile = File(project.rootDir, scriptObj)
+		} else if(scriptObj is File) {
+			build = null
+			scriptFile = scriptObj
 		} else {
 			build = null
 			scriptFile = (that as org.gradle.api.Script).file(scriptObj)
@@ -134,19 +138,19 @@ object Scripting {
 		val context = lastContext()
 		val project = context.project0
 		val methods = HashMap<String, (Array<out Any?>) -> Any?>()
-		val getter = HashMap<String, (Array<out Any?>) -> Any?>()
-		val setter = HashMap<String, (Array<out Any?>) -> Any?>()
+		val getters = HashMap<String, (Array<out Any?>) -> Any?>()
+		val setters = HashMap<String, (Array<out Any?>) -> Any?>()
 
 		scriptImport.what?.forEach { if(script.exports.find { e -> e.being == it } == null)
 			throw IllegalArgumentException("There's no such export '$it' from ${script.file}") }
 		for(export in script.exports) {
 			if(scriptImport.what != null && !scriptImport.what.contains(export.being))
 				continue
-			export.with.forEach { it(export, methods, getter, setter) }
+			export.with.forEach { it(export, methods, getters, setters) }
 		}
 		val imported = Imported(script.id, scriptImport.id)
 		scriptImport.imported = imported
-		imported.cache = prepareGroovyKotlinCache(scriptImport, methods, getter, setter)
+		imported.cache = prepareGroovyKotlinCache(scriptImport, methods, getters, setters)
 		imported.__start__()
 		attachAnyObject(imported, imported.cache!!)
 		imported.__end__()
@@ -244,20 +248,15 @@ object Scripting {
 			throw IllegalStateException("Duplicate gradle script id \"$scriptId\", another " +
 					"import is from \"${script.file.canonicalPath}\"")
 
-		val preCheck: () -> Boolean = preCheck@{
-			return@preCheck script.context == null
-		}
-		val postCheck: () -> Boolean = postCheck@{
-			if(script.context == null)
-				throw IllegalStateException("Imported script does not call scriptApply()")
-			__applyImport(scriptImport, script)
-			return@postCheck script.imports.add(scriptImport)
-		}
 		val preAction: () -> Unit = preAction@{
 			for(j in with.indices step 2)
 				with[j](scriptImport)
 		}
 		val postAction: () -> Unit = postAction@{
+			if(script.context == null)
+				throw IllegalStateException("Imported script does not call scriptApply()")
+			__applyImport(scriptImport, script)
+			script.imports.add(scriptImport)
 			for(j in with.size - 1 downTo 0 step 2)
 				with[j](scriptImport)
 		}
@@ -268,13 +267,11 @@ object Scripting {
 
 		try {
 			stack.addLast(scriptImport)
-			val preCheckResult = preCheck()
 			preAction()
-			if(preCheckResult)
+			if(script.context == null)
 				project.apply { it.from(project.relativePath(scriptFile)) }
 			actions[scriptId]?.let { it(scriptImport) }
 			postAction()
-			postCheck()
 		} catch(e: Throwable) {
 			val e0 = catchCheck(e)
 			if(e0 != null) throw e0
@@ -357,8 +354,8 @@ object Scripting {
 	@ExportGradle @JvmStatic
 	fun includeFlags(vararg flags: String): List<ImportAction> {
 		return listOf(
-			{ importInfo -> for(flag in flags) importInfo.context.project0.extensions.extraProperties.set("${importInfo.scriptId}_${flag}", true) },
-			{ importInfo -> for(flag in flags) importInfo.context.project0.extensions.extraProperties.set("${importInfo.scriptId}_${flag}", null) }
+			{ scriptImport -> for(flag in flags) scriptImport.context.project0.extensions.extraProperties.set("${scriptImport.id}_${flag}", true) },
+			{ scriptImport -> for(flag in flags) extraPropertiesRemoveKey("${scriptImport.id}_${flag}", scriptImport.context.project0.extensions.extraProperties) }
 		)
 	}
 	@ExportGradle @JvmStatic @JvmOverloads
@@ -367,7 +364,7 @@ object Scripting {
 		val project = context.project0
 		val ext = project.extensions.extraProperties
 		return if(scriptImport == null) ext.has(flag)
-		else ext.has("${scriptImport.scriptId}_${flag}")
+		else ext.has("${scriptImport.id}_${flag}")
 	}
 
 	@ExportGradle @JvmStatic

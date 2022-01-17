@@ -6,6 +6,7 @@ import GradleScript.Common.lastContext0
 import GradleScript.GroovyKotlinInteroperability.ExportGradle
 import GradleScript.GroovyKotlinInteroperability.GroovyInteroperability.prepareGroovyKotlinCache
 import GradleScript.GroovyKotlinInteroperability.GroovyKotlinCache
+import GradleScript.Strategies.UnsafeUtils.unsafe
 import GradleScript.Strategies.Utils.__invalid_type
 import GradleScript.Strategies.Utils.__unimplemented
 import groovy.lang.Closure
@@ -41,6 +42,7 @@ import org.gradle.api.tasks.TaskContainer
 import org.gradle.api.tasks.WorkResult
 import org.gradle.groovy.scripts.BasicScript
 import org.gradle.internal.composite.IncludedBuildInternal
+import org.gradle.internal.extensibility.DefaultExtraPropertiesExtension
 import org.gradle.kotlin.dsl.gradleKotlinDsl
 import org.gradle.kotlin.dsl.support.DefaultKotlinScript
 import org.gradle.kotlin.dsl.support.KotlinScriptHost
@@ -118,21 +120,36 @@ object GradleUtils {
 		return asBuildProject0(build) ?: throw __invalid_type()
 	}
 
-	// Gradle Global Ext
+	// Gradle Extra Properties
+	@JvmStatic internal val AFIELD_DefaultExtraPropertiesExtension_storage: Long
+	init {
+		val FIELD_DefaultExtraPropertiesExtension_storage = DefaultExtraPropertiesExtension::class.java.getDeclaredField("storage");
+		AFIELD_DefaultExtraPropertiesExtension_storage = unsafe.objectFieldOffset(FIELD_DefaultExtraPropertiesExtension_storage)
+	}
 	@ExportGradle @JvmStatic @JvmOverloads
-	fun hasGlobalExt(key: String, project: Any? = null): Boolean {
+	fun globalExtraPropertiesHas(key: String, project: Any? = null): Boolean {
 		val gradleExt = asGradle(project) as ExtraPropertiesExtension
 		return gradleExt.has(key)
 	}
 	@ExportGradle @JvmStatic @JvmOverloads
-	fun <T> getGlobalExt(key: String, project: Any? = null): T? {
+	fun <T> globalExtraPropertiesGet(key: String, project: Any? = null): T? {
 		val gradleExt = asGradle(project) as ExtraPropertiesExtension
 		return if(gradleExt.has(key)) gradleExt.get(key) as T? else null
 	}
 	@ExportGradle @JvmStatic @JvmOverloads
-	fun <T> setGlobalExt(key: String, obj: T, project: Any? = null) {
+	fun <T> globalExtraPropertiesSet(key: String, obj: T, project: Any? = null) {
 		val gradleExt = asGradle(project) as ExtraPropertiesExtension
 		gradleExt.set(key, obj)
+	}
+	@ExportGradle @JvmStatic @JvmOverloads
+	fun extraPropertiesRemoveKey(key: String, extra: ExtraPropertiesExtension? = null) {
+		val ext = extra ?: asGradle()
+		if(ext is DefaultExtraPropertiesExtension) {
+			val storage = unsafe.getObject(ext, AFIELD_DefaultExtraPropertiesExtension_storage) as HashMap<String, Object>
+			storage.remove(key)
+			return
+		}
+		__invalid_type()
 	}
 
 	// Gradle Task

@@ -198,10 +198,9 @@ object GroovyInteroperability {
 		// Mostly, any property getter will use context.that
 		// As shown in BasicScript$ScriptDynamicObject.tryGetProperty
 		val (that, _, project) = context
-		attachAnyObject(that, cache)
-		if(that is GroovyObject) {
-			val klass = that::class.java
-			val METHOD_BuildScript_target = klass.getMethod("getScriptTarget")
+		val klass = that::class.java
+		val METHOD_BuildScript_target = klass.declaredMethods.firstOrNull { m -> m.name == "getScriptTarget" && m.parameterCount == 0 }
+		if(METHOD_BuildScript_target != null) {
 			METHOD_BuildScript_target.isAccessible = true
 			val target = METHOD_BuildScript_target.invoke(that)
 			// But, the setter isn't going through the scriptObject
@@ -210,6 +209,7 @@ object GroovyInteroperability {
 			// is shown in CompositeDynamicObject.trySetProperty
 			attachAnyObject(target, cache)
 		}
+		attachAnyObject(that, cache)
 		attachProjectObject(project, cache)
 	}
 	@ExportGradle @JvmStatic

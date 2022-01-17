@@ -6,13 +6,9 @@ import GradleScript.Strategies.FileUtils
 import GradleScript.Strategies.FileUtils.file
 import GradleScript.Strategies.FileUtils.fileExists
 import GradleScript.Strategies.FileUtils.fileRelative
-import GradleScript.Strategies.LoggerUtils
-import GradleScript.Strategies.LoggerUtils.lwarn
 import GradleScript.Strategies.RuntimeUtils.env_getFile
 import GradleScript.Strategies.StringUtils.randomString
 import org.gradle.testkit.runner.BuildResult
-import org.gradle.testkit.runner.UnexpectedBuildFailure
-import org.gradle.testkit.runner.UnexpectedBuildSuccess
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.io.TempDir
@@ -203,7 +199,7 @@ open class AbstractProjectTest {
 		}
 	}
 
-	fun Project.newScript(name: String = randomString(10), expression: ProjectFileDSLExpression<Unit>): File {
+	fun Project.newScript(name: String = randomString(10) + ".gradle", expression: ProjectFileDSLExpression<Unit>): File {
 		name * {
 			-"""
 				context(this) {
@@ -216,56 +212,7 @@ open class AbstractProjectTest {
 	}
 
 	fun run(rootProject: RootProject, expectSucceed: Boolean = true): BuildResult {
-		var throwable: Throwable? = null
-		var result: BuildResult? = null
-		try {
-			result = rootProject.run(expectSucceed)
-		} catch(e: Throwable) {
-			when(e) {
-				is UnexpectedBuildFailure -> throwable = e
-				is UnexpectedBuildSuccess -> throwable = e
-				else -> throw e
-			}
-		} finally {
-			try {
-				// TODO: Manual destruct call, see Bugs#2
-				if(expectSucceed && throwable != null)
-					lwarn("Was expecting to not fail but failed, will manually call destruct")
-				if(!expectSucceed || throwable != null)
-					manualDestruct()
-			} catch(e2: Throwable) {
-				if(throwable == null)
-					throwable = e2
-				else {
-					e2.addSuppressed(throwable)
-					throwable = e2
-				}
-			}
-			if(throwable != null)
-				throw throwable
-		}
-		return result!!
-	}
-	fun manualDestruct() {
-		LoggerUtils.lwarn("Manual destructing")
-		withRootProject {
-			withDefaultSettingsSource()
-			withBuildSource {
-				-"""
-				import GradleScript.Common
-				
-				plugins {
-					id 'java'
-				}
-				
-				Common.context(this) {
-					if(Common.currentSession() != null)				
-						Common.destruct()
-				}
-				"""
-			}
-			run()
-		}
+		return rootProject.run(expectSucceed)
 	}
 
 	companion object {

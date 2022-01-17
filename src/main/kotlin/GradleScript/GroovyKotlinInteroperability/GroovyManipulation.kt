@@ -254,7 +254,7 @@ object GroovyManipulation {
 		val oldMetaProperty = propertyMap.get(metaProperty.name) as? MetaProperty
 		if(oldMetaProperty != null && metaPropertySame(metaProperty, oldMetaProperty))
 			System.err.println("Redefining meta property '${metaProperty.name}' for '${declaringClass}' at '$metaClass' with '$metaProperty'")
-		propertyMap.put(metaProperty.name, metaProperty);
+		propertyMap.put(metaProperty.name, metaProperty)
 	}
 	@JvmStatic
 	fun deleteMetaProperty0(metaClass: MetaClassImpl, name: String, declaringClass: CachedClass) {

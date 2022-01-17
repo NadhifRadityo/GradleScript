@@ -158,7 +158,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 		}
 		val result = run(project, false)
 		// java.lang.IllegalArgumentException: There's no such export 'NON_EXISTENT_EXPORT'
-		assertTrue(result.output.contains("NON_EXISTENT_EXPORT"))
+		assertTrue(result.output.contains("There's no such export 'NON_EXISTENT_EXPORT'"))
 		assertFalse(result.output.contains(randomVariable))
 	}
 

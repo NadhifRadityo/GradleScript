@@ -5,12 +5,10 @@ import GradleScript.GroovyKotlinInteroperability.GroovyInteroperability.attachOb
 import GradleScript.GroovyKotlinInteroperability.GroovyInteroperability.detachObject
 import GradleScript.GroovyKotlinInteroperability.GroovyInteroperability.prepareGroovyKotlinCache
 import GradleScript.GroovyKotlinInteroperability.GroovyKotlinCache
-import GradleScript.GroovyKotlinInteroperability.GroovyManipulation.closureToLambda0
 import GradleScript.Strategies.CommonUtils.purgeThreadLocal
 import GradleScript.Strategies.GradleUtils.asGradle
 import GradleScript.Strategies.GradleUtils.asProject0
 import GradleScript.Strategies.Utils.__must_not_happen
-import groovy.lang.Closure
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -45,66 +43,10 @@ object Common {
 		val exception = GradleException("Error while running construct")
 		context(that) {
 			if(session.build == null) {
-				val mainTasks = mutableListOf<Task>()
-				val unfinishedTasks = mutableListOf<Task>()
-				val dependsTreeBack = mutableMapOf<Task, MutableSet<Task>>()
-				val dependsTree = mutableMapOf<Task, Set<Task>?>()
-				fun computeTreeBack(task: Task, stack: LinkedList<Task> = LinkedList()) {
-					val tree = dependsTreeBack.computeIfAbsent(task) { mutableSetOf() }
-					val depends = dependsTree.computeIfAbsent(task) {
-						try { gradle.taskGraph.getDependencies(task) }
-						catch(ignored: IllegalStateException) { setOf() }
-					}
-					tree += stack
-					if(depends == null) return
-					stack.addLast(task)
-					for(depend in depends)
-						computeTreeBack(depend, stack)
-					stack.removeLast()
-				}
-				fun computeTree() {
-					val iterator = unfinishedTasks.iterator()
-					iteratorLoop@ while(iterator.hasNext()) {
-						val unfinishedTask = iterator.next()
-						val depends = dependsTree[unfinishedTask]
-						if(depends != null) {
-							for(depend in depends) {
-								if(depend.state.failure == null) continue
-								iterator.remove()
-								continue@iteratorLoop
-							}
-						}
-						for(tree in dependsTree.entries) {
-							val (task, dependencies) = tree
-							if(task == unfinishedTask || dependencies == null) continue
-							if(!dependencies.contains(unfinishedTask)) continue
-							val failures = dependencies.count { it.state.failure != null }
-							if(failures > 0) continue
-							continue@iteratorLoop
-						}
-						if(!mainTasks.contains(unfinishedTask)) {
-							iterator.remove()
-							continue@iteratorLoop
-						}
-					}
-				}
-				gradle.taskGraph.whenReady {
-					val currentTask = gradle.taskGraph.allTasks.filter { it.project.rootProject == project }
-					mainTasks += gradle.startParameter.taskNames.flatMap { project.getTasksByName(it, true) }
-					unfinishedTasks += currentTask
-					currentTask.forEach { computeTreeBack(it) }
-					if(unfinishedTasks.isEmpty()) destruct()
-				}
-				gradle.taskGraph.afterTask {
-					unfinishedTasks -= it
-					if(it.state.failure != null) {
-						val tree = dependsTreeBack[it]
-						if(tree != null) for(task in tree)
-							unfinishedTasks -= task
-					}
-					computeTree()
-					if(unfinishedTasks.isEmpty()) destruct()
-				}
+				lateinit var finalTask: Task
+				gradle.taskGraph.whenReady { finalTask = gradle.taskGraph.allTasks.last() }
+				gradle.taskGraph.afterTask { if(it == finalTask) destruct() }
+				gradle.afterProject { if(it.state.failure != null) destruct() }
 			} else {
 				val unfinishedProjects = mutableListOf<Project>()
 				gradle.allprojects { if(!it.state.executed) unfinishedProjects += it }
@@ -235,10 +177,6 @@ object Common {
 			if(context != last)
 				__must_not_happen()
 		}
-	}
-	@ExportGradle @JvmStatic
-	fun <T> context(that: Any, callback: Closure<T>): T {
-		return context(that, closureToLambda0(callback)) as T
 	}
 	@ExportGradle @JvmStatic
 	fun lastContext0(): Context? {

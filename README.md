@@ -169,7 +169,7 @@ Console Result:
 2. Threading is not and will never be intended feature. It will mess up the context stacks both in gradle and this project.
 
 ## Bugs
-- [ ] Destructor call is currently unstable -- especially when the script is failing, because it relies on `afterTask`, but not all tasks will be guaranteed to be called from that event.
+- [x] Destructor call is currently unstable -- especially when the script is failing, because it relies on `afterTask`, but not all tasks will be guaranteed to be called from that event.
       Fallback that will call destructor exactly before the constructor is possible, but not preferable because it will create memory leaks
       in Gradle daemon. Predicting on which script will be executed based on the graph is currently the most reliable way. But in the mean time, I will be researching more about the event handlers.
-- [ ] Destructor call is not being called, when the script is completely failing on configuration stage.
+- [x] Destructor call is not being called, when the script is completely failing on configuration stage.

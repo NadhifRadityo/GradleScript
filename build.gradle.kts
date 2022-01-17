@@ -28,6 +28,12 @@ fun DependencyHandlerScope.testsRuntimeOnly(dependencyNotation: Any) {
     "testRuntimeOnly"(dependencyNotation)
     "testFixturesRuntimeOnly"(dependencyNotation)
 }
+fun DependencyHandlerScope.removeRuntime(dependencyNotation: Any) {
+    val dependency = create(dependencyNotation)
+    configurations.implementation.get().dependencies.remove(dependency)
+    configurations.runtimeOnly.get().dependencies.remove(dependency)
+    configurations.api.get().dependencies.remove(dependency)
+}
 
 dependencies {
     compileOnly(gradleApi())
@@ -47,6 +53,12 @@ dependencies {
 
     implementation("org.apache.commons:commons-lang3:3.12.0")
     implementation("com.google.code.gson:gson:2.8.9")
+
+    // Automatically added by java-gradle-plugin, we don't want this.
+    removeRuntime(gradleApi())
+    removeRuntime(gradleKotlinDsl())
+    removeRuntime(localGroovy())
+    removeRuntime(gradleTestKit())
 }
 
 fun newTestTask(sourceSet: SourceSet, runAfter: TaskProvider<Test>? = null): TaskProvider<Test> {
@@ -69,9 +81,8 @@ tasks.check {
 
 tasks.withType<Test> {
     useJUnitPlatform()
-
     testLogging {
-        events("STARTED", "PASSED", "SKIPPED", "FAILED")
+        events("PASSED", "SKIPPED", "FAILED")
     }
 }
 tasks.withType<Jar> {
@@ -83,6 +94,10 @@ tasks.withType<Jar> {
         if(GUtil.isTrue(extension)) name += ".$extension"
         name
     })
+}
+tasks.getByName<Jar>("jar") {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    from(configurations.runtimeClasspath.get().files.map { if(it.isDirectory) it else zipTree(it) })
 }
 
 gradlePlugin {
