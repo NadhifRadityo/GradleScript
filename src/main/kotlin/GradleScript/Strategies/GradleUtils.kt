@@ -6,6 +6,7 @@ import GradleScript.Common.lastContext0
 import GradleScript.GroovyKotlinInteroperability.ExportGradle
 import GradleScript.GroovyKotlinInteroperability.GroovyInteroperability.prepareGroovyKotlinCache
 import GradleScript.GroovyKotlinInteroperability.GroovyKotlinCache
+import GradleScript.Strategies.ClassUtils.metaClassFor
 import GradleScript.Strategies.UnsafeUtils.unsafe
 import GradleScript.Strategies.Utils.__invalid_type
 import GradleScript.Strategies.Utils.__unimplemented
@@ -118,6 +119,25 @@ object GradleUtils {
 	@ExportGradle
 	fun asBuildProject(build: IncludedBuild): Project {
 		return asBuildProject0(build) ?: throw __invalid_type()
+	}
+	@ExportGradle
+	fun asScriptHandler0(self: Any): ScriptHandler? {
+		if(self is ScriptHandler)
+			return self
+		val metaClass = metaClassFor(self)
+		if(metaClass != null) {
+			val PROPERTY_UNKNOWN_buildscript = metaClass.properties.firstOrNull() { it.name == "buildscript" }
+			val buildscript = PROPERTY_UNKNOWN_buildscript?.getProperty(self) as? ScriptHandler
+			if(buildscript != null) return buildscript
+		}
+		val FIELD_UNKNOWN_buildscript = self.javaClass.declaredFields.firstOrNull { it.name == "buildscript" }
+		val buildscript = FIELD_UNKNOWN_buildscript?.get(self) as? ScriptHandler
+		if(buildscript != null) return buildscript
+		return null
+	}
+	@ExportGradle
+	fun asScriptHandler(self: Any): ScriptHandler {
+		return asScriptHandler0(self) ?: throw __invalid_type()
 	}
 
 	// Gradle Extra Properties

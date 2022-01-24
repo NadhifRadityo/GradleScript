@@ -1,6 +1,8 @@
 package GradleScript.DynamicScripting
 
+import GradleScript.Common.addOnConfigFinished
 import GradleScript.Context
+import GradleScript.DynamicScripting.Scripting.scriptUnimport
 import org.gradle.api.initialization.IncludedBuild
 import java.io.File
 

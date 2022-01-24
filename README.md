@@ -5,14 +5,6 @@
 ### Groovy DSL
 build.gradle
 ```groovy
-/**
- * Need to type full path because dynamic import
- * is not available yet, after this any import can be omitted
- */
-Gradle.Common.context(this) {
-    Gradle.Common.construct()
-}
-
 context(this) {
     scriptImport listOf("printHello", "getWorld"), from('functions.gradle')
     printHello(getWorld("Beautiful"))
@@ -83,19 +75,10 @@ Still under development
 
 build.gradle.kts
 ```kotlin
-import Gradle.Common.context
-import Gradle.Common.construct
 import Gradle.Strategies.KeywordsUtils.from
 import Gradle.DynamicScripting.Scripting.scriptImport
 import Gradle.GroovyKotlinInteroperability.expandImport2
 import Gradle.GroovyKotlinInteroperability.cls
-
-context(this) {
-    /**
-     * On main module, this function must be called
-     */
-    construct()
-}
 
 context(this) {
     /**

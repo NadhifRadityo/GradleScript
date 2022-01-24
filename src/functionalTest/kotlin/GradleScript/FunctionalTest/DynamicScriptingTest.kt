@@ -1,9 +1,9 @@
 package GradleScript.FunctionalTest
 
+import GradleScript.Strategies.StringUtils.countOccurrences
 import GradleScript.Strategies.StringUtils.randomString
 import GradleScript.TestFixtures.AbstractGradleTest
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
 class DynamicScriptingTest: AbstractGradleTest() {
@@ -430,5 +430,183 @@ class DynamicScriptingTest: AbstractGradleTest() {
 		assertFalse(result.output.contains(randomVariable3))
 		// groovy.lang.MissingPropertyException: Could not get unknown property 'testVariable3'
 		assertTrue(result.output.contains("Could not get unknown property 'testVariable3'"))
+	}
+
+	@Test
+	fun `should call script construct when first imported`() {
+		val randomVariable = randomString(50)
+		val project = withRootProject {
+			withDefaultSettingsSource()
+			withDefaultBuildSource()
+			val script = newScript {
+				+"""
+				context(this) {
+					scriptConstruct {
+						llog '${randomVariable}'
+					}
+				}
+				"""
+			}
+			withBuildSource {
+				+"""
+				context(this) {
+					scriptImport from('${script.name}')
+					scriptImport from('${script.name}')
+				}
+				"""
+			}
+		}
+		val result = run(project)
+		assertEquals(countOccurrences(result.output, randomVariable), 1)
+	}
+
+	@Test
+	fun `should call script destruct when last unimported`() {
+		val randomVariable = randomString(50)
+		val project = withRootProject {
+			withDefaultSettingsSource()
+			withDefaultBuildSource()
+			val script = newScript {
+				+"""
+				context(this) {
+					scriptDestruct {
+						llog '${randomVariable}'
+					}
+				}
+				"""
+			}
+			withBuildSource {
+				+"""
+				context(this) {
+					scriptImport from('${script.name}')
+					scriptImport from('${script.name}')
+				}
+				"""
+			}
+		}
+		val result = run(project)
+		assertEquals(countOccurrences(result.output, randomVariable), 1)
+	}
+
+	@Test
+	fun `should call script construct when first imported and script destruct when last unimported`() {
+		val randomVariable = randomString(50)
+		val randomVariable2 = randomString(50)
+		val project = withRootProject {
+			withDefaultSettingsSource()
+			withDefaultBuildSource()
+			val script = newScript {
+				+"""
+				context(this) {
+					scriptConstruct {
+						llog '${randomVariable}'
+					}
+					scriptDestruct {
+						llog '${randomVariable2}'
+					}
+				}
+				"""
+			}
+			withBuildSource {
+				+"""
+				context(this) {
+					scriptImport from('${script.name}')
+					scriptImport from('${script.name}')
+				}
+				"""
+			}
+		}
+		val result = run(project)
+		assertEquals(countOccurrences(result.output, randomVariable), 1)
+		assertEquals(countOccurrences(result.output, randomVariable2), 1)
+	}
+
+	@Test
+	fun `should call import action every importing script`() {
+		val randomVariable = randomString(50)
+		val project = withRootProject {
+			withDefaultSettingsSource()
+			withDefaultBuildSource()
+			val script = newScript {
+				+"""
+				context(this) {
+					scriptImportAction {
+						llog '${randomVariable}'
+					}
+				}
+				"""
+			}
+			withBuildSource {
+				+"""
+				context(this) {
+					scriptImport from('${script.name}')
+					scriptImport from('${script.name}')
+				}
+				"""
+			}
+		}
+		val result = run(project)
+		assertEquals(countOccurrences(result.output, randomVariable), 2)
+	}
+
+	@Test
+	fun `should call unimport action every unimporting script`() {
+		val randomVariable = randomString(50)
+		val project = withRootProject {
+			withDefaultSettingsSource()
+			withDefaultBuildSource()
+			val script = newScript {
+				+"""
+				context(this) {
+					scriptUnimportAction {
+						llog '${randomVariable}'
+					}
+				}
+				"""
+			}
+			withBuildSource {
+				+"""
+				context(this) {
+					scriptImport from('${script.name}')
+					scriptImport from('${script.name}')
+				}
+				"""
+			}
+		}
+		val result = run(project)
+		assertEquals(countOccurrences(result.output, randomVariable), 2)
+	}
+
+	@Test
+	fun `should call import action every importing script and unimport action every unimporting script`() {
+		val randomVariable = randomString(50)
+		val randomVariable2 = randomString(50)
+		val project = withRootProject {
+			withDefaultSettingsSource()
+			withDefaultBuildSource()
+			val script = newScript {
+				+"""
+				context(this) {
+					scriptImportAction {
+						llog '${randomVariable}'
+					}
+					scriptUnimportAction {
+						llog '${randomVariable2}'
+					}
+				}
+				"""
+			}
+			withBuildSource {
+				+"""
+				context(this) {
+					scriptImport from('${script.name}')
+					scriptImport from('${script.name}')
+				}
+				"""
+			}
+		}
+		val result = run(project)
+		assertEquals(countOccurrences(result.output, randomVariable), 2)
+		assertEquals(countOccurrences(result.output, randomVariable2), 2)
 	}
 }

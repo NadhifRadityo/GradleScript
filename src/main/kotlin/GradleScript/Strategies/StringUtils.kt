@@ -87,4 +87,16 @@ object StringUtils {
 	fun mostSafeString(string: String): String { return string.lowercase(Locale.getDefault()).replace("[^A-Za-z0-9]".toRegex(), "_") }
 	@ExportGradle @JvmStatic @JvmOverloads
 	fun randomString(length: Int = 8, charset: CharArray = ALPHANUMERIC.toCharArray()): String { return (0 until length).map { charset.random() }.joinToString("") }
+	@ExportGradle @JvmStatic @JvmOverloads
+	fun countOccurrences(string: String, find: String, ignoreCase: Boolean = false, start: Int = 0, end: Int = string.length): Int {
+		var lastIndex = start
+		var count = 0
+		while(lastIndex < end) {
+			lastIndex = string.indexOf(find, lastIndex, ignoreCase)
+			if(lastIndex == -1) break
+			lastIndex += find.length
+			count++
+		}
+		return count
+	}
 }

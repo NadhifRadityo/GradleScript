@@ -17,7 +17,7 @@ open class ScriptImport(
 	val scriptId: String,
 	val what: List<String>?,
 	val being: String?,
-	val with: MutableList<ImportAction>
+	val with: MutableList<ImportWith>
 ) {
 	var imported: Imported? = null
 		internal set

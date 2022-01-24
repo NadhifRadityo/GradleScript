@@ -2,6 +2,7 @@ package GradleScript.GroovyKotlinInteroperability
 
 import GradleScript.Common.groovyKotlinCaches
 import GradleScript.GroovyKotlinInteroperability.GroovyInteroperability.prepareGroovyKotlinCache
+import GradleScript.Strategies.ClassUtils.metaClassFor
 import GradleScript.Strategies.Utils.__invalid_type
 import GradleScript.Strategies.Utils.__must_not_happen
 import groovy.lang.*
@@ -440,10 +441,7 @@ object GroovyManipulation {
 	}
 	@JvmStatic
 	fun setKotlinToGroovy(that: Any?, project: Project?, names: Array<String>, value: Any?) {
-		val METHOD_UNKNOWN_getMetaClass = try { that?.javaClass?.getDeclaredMethod("getMetaClass") } catch(e: NoSuchMethodException) { null }
-		var metaClass = (that as? GroovyObject)?.metaClass as? MetaClassImpl
-		if(that != null && metaClass == null && METHOD_UNKNOWN_getMetaClass != null)
-			metaClass = METHOD_UNKNOWN_getMetaClass.invoke(that) as? MetaClassImpl
+		val metaClass = if(that != null) metaClassFor(that) as? MetaClassImpl else null
 		val declaringClass = metaClass?.theCachedClass
 		val ext = project?.extensions?.extraProperties
 

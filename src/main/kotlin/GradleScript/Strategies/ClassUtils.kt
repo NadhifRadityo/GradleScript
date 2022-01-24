@@ -61,9 +61,13 @@ object ClassUtils {
 	fun <T> classForName0(name: String?, initialize: Boolean = true, loader: ClassLoader? = defaultClassLoader): Class<out T> {
 		return Class.forName(name, initialize, loader) as Class<out T> }
 	@ExportGradle @JvmStatic
-	fun metaClassFor(clazz: Class<*>): MetaClass { return getMetaClass(clazz) }
+	fun metaClassFor(clazz: Class<*>): MetaClass? { return getMetaClass(clazz) }
 	@ExportGradle @JvmStatic
-	fun metaClassFor(obj: Any): MetaClass { return getMetaClass(obj) }
+	fun metaClassFor(obj: Any): MetaClass? { return getMetaClass(obj) }
+	@ExportGradle @JvmStatic
+	fun metaClassFor0(clazz: Class<*>): MetaClass { return getMetaClass(clazz)!! }
+	@ExportGradle @JvmStatic
+	fun metaClassFor0(obj: Any): MetaClass { return getMetaClass(obj)!! }
 
 	@ExportGradle @JvmStatic
 	fun overrideFinal(obj: Any?, field: Field, newValue: Any?) {
@@ -102,7 +106,7 @@ object ClassUtils {
 		return if(currentClass == null) null else currentClassFile(currentClass)
 	}
 
-	val defaultNotPackageFilter = listOf("java", "sun", "kotlin", "groovy", "org.gradle", "org.apache", "org.codehaus", "Gradle", "DUMMY$")
+	val defaultNotPackageFilter = listOf("java", "jdk", "sun", "kotlin", "groovy", "org.gradle", "org.apache", "org.codehaus", "Gradle", "DUMMY$")
 	@ExportGradle @JvmStatic
 	fun callerUserImplementedClass(vararg notFilter: String): String? {
 		return Thread.currentThread().stackTrace.first { s ->
