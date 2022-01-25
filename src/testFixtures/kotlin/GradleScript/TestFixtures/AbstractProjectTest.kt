@@ -151,7 +151,7 @@ fun <T> File.files(expression: DefaultFileDSLExpression<T>) {
 	DefaultFileDSL(this).expression()
 }
 
-open class AbstractProjectTest {
+open class AbstractProjectTest: BaseContextTest {
 	@TempDir
 	lateinit var testDir: File
 	protected var currentProject: Project? = null
@@ -213,17 +213,5 @@ open class AbstractProjectTest {
 
 	fun run(rootProject: RootProject, expectSucceed: Boolean = true): BuildResult {
 		return rootProject.run(expectSucceed)
-	}
-
-	companion object {
-		@BeforeAll @JvmStatic
-		fun beforeAll() {
-			constructNoContext()
-		}
-
-		@AfterAll @JvmStatic
-		fun afterAll() {
-			destructNoContext()
-		}
 	}
 }

@@ -30,16 +30,16 @@ object JSONUtils {
 	}
 
 	@ExportGradle @JvmStatic
-	fun <T> toJson(reader: Reader, clazz: Class<T>): T { return Gson().fromJson(reader, clazz) }
+	fun <T> fromJson(reader: Reader, clazz: Class<T>): T { return Gson().fromJson(reader, clazz) }
 	@ExportGradle @JvmStatic
-	fun <T> toJson(stream: InputStream, clazz: Class<T>): T { return Gson().fromJson(InputStreamReader(stream), clazz) }
+	fun <T> fromJson(stream: InputStream, clazz: Class<T>): T { return Gson().fromJson(InputStreamReader(stream), clazz) }
 	@ExportGradle @JvmStatic
-	fun <T> toJson(string: String, clazz: Class<T>): T { return Gson().fromJson(string, clazz) }
+	fun <T> fromJson(string: String, clazz: Class<T>): T { return Gson().fromJson(string, clazz) }
 	@ExportGradle @JvmStatic @Throws(IOException::class)
-	fun <T> toJson(file: File, clazz: Class<T>?): T { return Gson().fromJson(fileString(file), clazz) }
+	fun <T> fromJson(file: File, clazz: Class<T>?): T { return Gson().fromJson(fileString(file), clazz) }
 
 	@ExportGradle @JvmStatic @Throws(IOException::class)
-	fun <T> JSONToString(obj: T): String {
+	fun <T> toJson(obj: T): String {
 		StringWriter().use { stringWriter ->
 			JsonWriter(stringWriter).use { jsonWriter ->
 				jsonWriter.setIndent("\t")
@@ -50,8 +50,8 @@ object JSONUtils {
 	}
 
 	@ExportGradle @JvmStatic @Throws(Exception::class)
-	fun <T> createJSONFile(obj: T, target: File): String {
-		val stringOut = JSONToString(obj)
+	fun <T> toJsonFile(obj: T, target: File): String {
+		val stringOut = toJson(obj)
 		mkfile(target)
 		writeFileString(target, stringOut, StandardCharsets.UTF_8)
 		linfo("Configurations written to: ${target.path}")

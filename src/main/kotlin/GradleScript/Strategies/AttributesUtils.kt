@@ -7,6 +7,7 @@ import GradleScript.GroovyKotlinInteroperability.GroovyInteroperability.prepareG
 import GradleScript.GroovyKotlinInteroperability.GroovyKotlinCache
 import GradleScript.Strategies.ExceptionUtils.exception
 import GradleScript.Strategies.FileUtils.file
+import GradleScript.Strategies.RuntimeUtils.JAVA_DETECTION_VERSION
 import GradleScript.Strategies.UnsafeUtils.unsafe
 import java.io.File
 import java.lang.ref.WeakReference
@@ -37,8 +38,36 @@ object AttributesUtils {
 		AFIELD_Attributes_Name_hashCode = unsafe.objectFieldOffset(FIELD_Attributes_Name_hashCode)
 	}
 
+	// Java 17 has implementation which calculates the hash code
+	// insensitively on uppercase characters, this should be the correct behaviour
 	@ExportGradle @JvmStatic
-	fun attributeKey(key: String?): Attributes.Name {
+	fun attributeKeyHash(key: String): Int {
+		val length = key.length
+		if(length > 70 || length == 0)
+			throw IllegalArgumentException(key)
+		if(JAVA_DETECTION_VERSION <= 8) {
+			val char1 = key.get(0);
+			if(!(char1 in 'a'..'z' || char1 in 'A'..'Z' || char1 in '0'..'9'))
+				throw IllegalArgumentException("First character must be alphanum");
+			for(i in 1 until length) {
+				val char = key.get(i)
+				if(!(char in 'a'..'z' || char in 'A'..'Z' ||
+							char in '0'..'9' || char == '-' || char == '_'))
+					throw IllegalArgumentException("Characters must be alphanums, '-' or '_'")
+			}
+			return key.lowercase().hashCode()
+		}
+		var hash = 0
+		for(i in 0 until length) {
+			val char = key.get(i)
+			hash = if(char in 'a'..'z') hash * 31 + (char.code - 0x20)
+			else if(char in 'A'..'Z' || char in '0'..'9' || char == '_' || char == '-') hash * 31 + char.code
+			else throw IllegalArgumentException(key)
+		}
+		return hash
+	}
+	@ExportGradle @JvmStatic
+	fun attributeKey(key: String): Attributes.Name {
 		var result = localAttributesKey.get()?.get()
 		if(result == null) {
 			result = try { unsafe.allocateInstance(Attributes.Name::class.java) as Attributes.Name }
@@ -46,7 +75,7 @@ object AttributesUtils {
 			localAttributesKey.set(WeakReference(result))
 		}
 		unsafe.putObject(result, AFIELD_Attributes_Name_name, key)
-		unsafe.putInt(result, AFIELD_Attributes_Name_hashCode, -1)
+		unsafe.putInt(result, AFIELD_Attributes_Name_hashCode, attributeKeyHash(key))
 		return result!!
 	}
 

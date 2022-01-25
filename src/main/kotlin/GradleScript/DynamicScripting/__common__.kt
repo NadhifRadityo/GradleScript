@@ -10,4 +10,7 @@ fun destruct() {
 typealias ImportAction = (ScriptImport) -> Unit
 typealias UnimportAction = (ScriptImport) -> Unit
 typealias ImportWith = (ScriptImport) -> Unit
+
+typealias ExportAction = (ScriptExport) -> Unit
+typealias UnexportAction = (ScriptExport) -> Unit
 typealias ExportWith = (ScriptExport, MutableMap<String, (Array<out Any?>) -> Any?>, MutableMap<String, (Array<out Any?>) -> Any?>, MutableMap<String, (Array<out Any?>) -> Any?>) -> Unit

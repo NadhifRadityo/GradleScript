@@ -19,6 +19,6 @@ open class ScriptImport(
 	val being: String?,
 	val with: MutableList<ImportWith>
 ) {
-	var imported: Imported? = null
+	lateinit var imported: Imported
 		internal set
 }

@@ -13,11 +13,10 @@ import GradleScript.GroovyKotlinInteroperability.GroovyInteroperability.detachAn
 import GradleScript.GroovyKotlinInteroperability.GroovyInteroperability.detachObject
 import GradleScript.GroovyKotlinInteroperability.GroovyInteroperability.prepareGroovyKotlinCache
 import GradleScript.GroovyKotlinInteroperability.GroovyKotlinCache
-import GradleScript.GroovyKotlinInteroperability.KotlinClosure
+import GradleScript.GroovyKotlinInteroperability.GroovyManipulation.lambda1ToClosure
 import GradleScript.GroovyKotlinInteroperability.parseProperty
 import GradleScript.Strategies.CommonUtils.purgeThreadLocal
 import GradleScript.Strategies.GradleUtils.asBuildProject0
-import GradleScript.Strategies.GradleUtils.asScriptHandler
 import GradleScript.Strategies.GradleUtils.extraPropertiesRemoveKey
 import GradleScript.Strategies.KeywordsUtils
 import GradleScript.Strategies.KeywordsUtils.being
@@ -35,8 +34,6 @@ object Scripting {
 	@JvmStatic private var cache: GroovyKotlinCache<Scripting>? = null
 	@JvmStatic internal val scripts = HashMap<String, Script>()
 	@JvmStatic internal val stack = ThreadLocal.withInitial<LinkedList<ScriptImport>> { LinkedList() }
-	@JvmStatic internal val importActions = HashMap<String, ImportAction?>()
-	@JvmStatic internal val unimportActions = HashMap<String, UnimportAction?>()
 	@JvmStatic internal val builds = ArrayList<IncludedBuild>()
 	@JvmStatic internal val injectScripts = ArrayList<GroovyKotlinCache<*>>()
 
@@ -66,8 +63,6 @@ object Scripting {
 		cache = null
 		scripts.clear()
 		purgeThreadLocal(stack)
-		importActions.clear()
-		unimportActions.clear()
 		builds.clear()
 	}
 
@@ -148,8 +143,9 @@ object Scripting {
 	 */
 	@JvmStatic
 	fun __applyImport(scriptImport: ScriptImport, script: Script) {
-		val context = lastContext()
+		val context = scriptImport.context
 		val project = context.project0
+		val imported = scriptImport.imported
 		val methods = HashMap<String, (Array<out Any?>) -> Any?>()
 		val getters = HashMap<String, (Array<out Any?>) -> Any?>()
 		val setters = HashMap<String, (Array<out Any?>) -> Any?>()
@@ -161,8 +157,6 @@ object Scripting {
 				continue
 			export.with.forEach { it(export, methods, getters, setters) }
 		}
-		val imported = Imported(script.id, scriptImport.id)
-		scriptImport.imported = imported
 		imported.cache = prepareGroovyKotlinCache(scriptImport, methods, getters, setters)
 		imported.__start__()
 		attachAnyObject(imported, imported.cache!!)
@@ -174,9 +168,9 @@ object Scripting {
 	}
 	@JvmStatic
 	fun __unapplyImport(scriptImport: ScriptImport, script: Script) {
-		val imported = scriptImport.imported!!
 		val context = scriptImport.context
 		val project = context.project0
+		val imported = scriptImport.imported
 
 		if(scriptImport.being != null)
 			extraPropertiesRemoveKey(scriptImport.being, project.extensions.extraProperties)
@@ -271,6 +265,7 @@ object Scripting {
 		val script = scripts.computeIfAbsent(scriptId) { Script(build, scriptFile, scriptId) }
 		val scriptImportId = "$scriptId#${randomString()}"
 		val scriptImport = ScriptImport(scriptImportId, context, scriptId, what, being, ArrayList(with))
+		scriptImport.imported = Imported(script.id, scriptImport.id)
 		if(script.file.canonicalPath != scriptFile.path)
 			throw IllegalStateException("Duplicate gradle script id \"$scriptId\", another " +
 					"import is from \"${script.file.canonicalPath}\"")
@@ -299,7 +294,7 @@ object Scripting {
 				project.apply { it.from(project.relativePath(scriptFile)) }
 			if(script.imports.size == 1)
 				script.construct?.invoke()
-			importActions[scriptId]?.let { it(scriptImport) }
+			script.importAction?.invoke(scriptImport)
 			postAction()
 		} catch(e: Throwable) {
 			val e0 = catchCheck(e)
@@ -309,7 +304,7 @@ object Scripting {
 			if(scriptImport != lastStack)
 				__must_not_happen()
 		}
-		return scriptImport.imported!!
+		return scriptImport.imported
 	}
 	@ExportGradle @JvmStatic @JvmOverloads
 	fun scriptImport(from: Any, being: String? = null, with: List<ImportWith> = listOf()): Imported {
@@ -364,7 +359,7 @@ object Scripting {
 		try {
 			stack.addLast(scriptImport)
 			preAction()
-			unimportActions[scriptId]?.let { it(scriptImport) }
+			script.unimportAction?.invoke(scriptImport)
 			if(script.imports.size == 1)
 				script.destruct?.invoke()
 			postAction()
@@ -377,18 +372,39 @@ object Scripting {
 				__must_not_happen()
 		}
 	}
+	@ExportGradle @JvmStatic
+	fun scriptUnimport(scriptImport: ScriptImport) {
+		scriptUnimport(scriptImport.scriptId, scriptImport.id)
+	}
+	@ExportGradle @JvmStatic
 	fun scriptUnimport(imported: Imported) {
-		scriptUnimport(imported.scriptId, imported.importId)
+		scriptUnimport(imported.scriptImport)
 	}
+
 	@ExportGradle @JvmStatic @JvmOverloads
-	fun scriptExport(what: Any?, being: String, with: List<ExportWith> = listOf()) {
+	fun scriptExport(what: Any?, being: String, with: List<ExportWith> = listOf()): ScriptExport {
 		val lastImportScript = __getLastImportScript()!!
-		lastImportScript.exports += ScriptExport(lastImportScript.id, what, being, ArrayList(with))
+		val scriptExport = ScriptExport(lastImportScript.id, what, being, ArrayList(with))
+		lastImportScript.exports += scriptExport
+		lastImportScript.exportAction?.invoke(scriptExport)
+		return scriptExport
 	}
 	@ExportGradle @JvmStatic @JvmOverloads
-	fun scriptExport(what: Any?, being: KeywordsUtils.Being<String>, with: KeywordsUtils.With<List<ExportWith>> = with(exportGetter())) {
-		scriptExport(what, being.user, with.user)
+	fun scriptExport(what: Any?, being: KeywordsUtils.Being<String>, with: KeywordsUtils.With<List<ExportWith>> = with(exportGetter())): ScriptExport {
+		return scriptExport(what, being.user, with.user)
 	}
+	@ExportGradle @JvmStatic
+	fun scriptUnexport(being: String) {
+		val lastImportScript = __getLastImportScript()!!
+		val scriptExport = lastImportScript.exports.first { it.being == being }
+		lastImportScript.unexportAction?.invoke(scriptExport)
+		lastImportScript.exports -= scriptExport
+	}
+	@ExportGradle @JvmStatic
+	fun scriptUnexport(scriptExport: ScriptExport) {
+		scriptUnexport(scriptExport.being)
+	}
+
 	@ExportGradle @JvmStatic
 	fun scriptApply() {
 		val lastImportScript = __getLastImportScript()!!
@@ -407,26 +423,25 @@ object Scripting {
 		val lastImportScript = __getLastImportScript()!!
 		lastImportScript.destruct = callback
 	}
-
 	@ExportGradle @JvmStatic
 	fun scriptImportAction(action: ImportAction?) {
-		val context = lastContext()
-		val sourceFile = asScriptHandler(context.that).sourceFile!!
-		val (_, scriptFile) = __getScriptFile(sourceFile)
-		val scriptId = getScriptId(scriptFile)
-		if(action != null)
-			importActions[scriptId] = action
-		else importActions.remove(scriptId)
+		val lastImportScript = __getLastImportScript()!!
+		lastImportScript.importAction = action
 	}
 	@ExportGradle @JvmStatic
 	fun scriptUnimportAction(action: UnimportAction?) {
-		val context = lastContext()
-		val sourceFile = asScriptHandler(context.that).sourceFile!!
-		val (_, scriptFile) = __getScriptFile(sourceFile)
-		val scriptId = getScriptId(scriptFile)
-		if(action != null)
-			unimportActions[scriptId] = action
-		else unimportActions.remove(scriptId)
+		val lastImportScript = __getLastImportScript()!!
+		lastImportScript.unimportAction = action
+	}
+	@ExportGradle @JvmStatic
+	fun scriptExportAction(action: ExportAction?) {
+		val lastImportScript = __getLastImportScript()!!
+		lastImportScript.exportAction = action
+	}
+	@ExportGradle @JvmStatic
+	fun scriptUnexportAction(action: UnexportAction?) {
+		val lastImportScript = __getLastImportScript()!!
+		lastImportScript.unexportAction = action
 	}
 
 	@ExportGradle @JvmStatic
@@ -458,28 +473,26 @@ object Scripting {
 	}
 	@ExportGradle @JvmStatic
 	fun exportGetter(): List<ExportWith> {
-		return listOf { exportInfo, _, getter, _ -> getter[exportInfo.being] = { exportInfo.what } }
+		return listOf { exportInfo, _, getters, _ -> getters[exportInfo.being] = { exportInfo.what } }
 	}
 	@ExportGradle @JvmStatic
 	fun exportSetter(): List<ExportWith> {
-		return listOf { exportInfo, _, _, setter -> setter[exportInfo.being] = { args -> exportInfo.what = args[0] } }
+		return listOf { exportInfo, _, _, setters -> setters[exportInfo.being] = { args -> exportInfo.what = args[0] } }
 	}
 
 	@ExportGradle @JvmStatic
 	fun withCurrentImport(): Closure<*> {
 		val lastImport = __getLastImport()!!
-		val result = KotlinClosure("scriptState (${lastImport.id})")
-		result.overloads += KotlinClosure.KLambdaOverload { args ->
+		return lambda1ToClosure({ closure: Closure<*> ->
 			val stack = stack.get()
 			stack.addLast(lastImport)
 			try {
-				(args[0] as Closure<*>).call()
+				closure.call()
 			} finally {
 				val lastStack = stack.removeLast()
 				if(lastImport != lastStack)
 					__must_not_happen()
 			}
-		}
-		return result
+		}, "scriptState (${lastImport.id})")
 	}
 }
