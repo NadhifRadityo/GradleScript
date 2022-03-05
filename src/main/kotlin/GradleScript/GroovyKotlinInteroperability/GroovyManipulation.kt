@@ -1,7 +1,6 @@
 package GradleScript.GroovyKotlinInteroperability
 
 import GradleScript.Common.groovyKotlinCaches
-import GradleScript.DynamicScripting.Scripting
 import GradleScript.GroovyKotlinInteroperability.GroovyInteroperability.prepareGroovyKotlinCache
 import GradleScript.Strategies.ClassUtils.metaClassFor
 import GradleScript.Strategies.Utils.__invalid_type
@@ -359,7 +358,7 @@ object GroovyManipulation {
 		return result
 	}
 	@ExportGradle @JvmStatic
-	fun klambdaNToClosure(lambda: (Array<out Any?>) -> Any?, name: String = lambda.toString()): Closure<*> {
+	fun lambdaNToClosure(lambda: (Array<out Any?>) -> Any?, name: String = lambda.toString()): Closure<*> {
 		val result = KotlinClosure(name)
 		result.overloads += KotlinClosure.KLambdaOverload(lambda)
 		return result

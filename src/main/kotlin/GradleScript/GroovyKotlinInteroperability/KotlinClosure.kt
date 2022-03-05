@@ -100,7 +100,7 @@ open class KotlinClosure(
 	}
 	open class KLambdaOverload(
 		val lambda: (Array<out Any?>) -> Any?
-	): Overload(arrayOf(Array<Any?>::class.java), { val args = it[0] ?: arrayOf<Any?>(); lambda(args as Array<out Any?>) }) {
+	): Overload(arrayOf(Array<Any?>::class.java), { val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args) }) {
 		override fun toString(): String {
 			return lambda.toString()
 		}

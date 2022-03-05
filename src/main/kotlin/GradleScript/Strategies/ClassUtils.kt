@@ -79,14 +79,52 @@ object ClassUtils {
 				modifiersField.isAccessible = true
 				modifiersField.setInt(field, field.modifiers and Modifier.FINAL.inv())
 				field.isAccessible = true
-				field[obj] = newValue
+				if(field.type == Byte::class.java && newValue is Byte)
+					field.setByte(obj, newValue)
+				else if(field.type == Boolean::class.java && newValue is Boolean)
+					field.setBoolean(obj, newValue)
+				else if(field.type == Char::class.java && newValue is Char)
+					field.setChar(obj, newValue)
+				else if(field.type == Short::class.java && newValue is Short)
+					field.setShort(obj, newValue)
+				else if(field.type == Int::class.java && newValue is Int)
+					field.setInt(obj, newValue)
+				else if(field.type == Long::class.java && newValue is Long)
+					field.setLong(obj, newValue)
+				else if(field.type == Float::class.java && newValue is Float)
+					field.setFloat(obj, newValue)
+				else if(field.type == Double::class.java && newValue is Double)
+					field.setDouble(obj, newValue)
+				else if(field.type.isPrimitive)
+					throw IllegalArgumentException("Cannot cast object to primitive")
+				else
+					field.set(obj, newValue)
 			}
 		} catch(e: Throwable) { exception = exception(e) }
 		if(!useUnsafe && exception == null) return
 		try {
 			val fieldObject = obj ?: unsafe.staticFieldBase(field)
 			val fieldOffset = if(obj != null) unsafe.objectFieldOffset(field) else unsafe.staticFieldOffset(field)
-			unsafe.putObject(fieldObject, fieldOffset, newValue)
+			if(field.type == Byte::class.java && newValue is Byte)
+				unsafe.putByte(fieldObject, fieldOffset, newValue)
+			else if(field.type == Boolean::class.java && newValue is Boolean)
+				unsafe.putBoolean(fieldObject, fieldOffset, newValue)
+			else if(field.type == Char::class.java && newValue is Char)
+				unsafe.putChar(fieldObject, fieldOffset, newValue)
+			else if(field.type == Short::class.java && newValue is Short)
+				unsafe.putShort(fieldObject, fieldOffset, newValue)
+			else if(field.type == Int::class.java && newValue is Int)
+				unsafe.putInt(fieldObject, fieldOffset, newValue)
+			else if(field.type == Long::class.java && newValue is Long)
+				unsafe.putLong(fieldObject, fieldOffset, newValue)
+			else if(field.type == Float::class.java && newValue is Float)
+				unsafe.putFloat(fieldObject, fieldOffset, newValue)
+			else if(field.type == Double::class.java && newValue is Double)
+				unsafe.putDouble(fieldObject, fieldOffset, newValue)
+			else if(field.type.isPrimitive)
+				throw IllegalArgumentException("Cannot cast object to primitive")
+			else
+				unsafe.putObject(fieldObject, fieldOffset, newValue)
 		} catch(e: Throwable) {
 			if(exception != null) e.addSuppressed(exception)
 			throw Error(exception(e))
