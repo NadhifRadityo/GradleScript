@@ -9,6 +9,7 @@ import sun.misc.Unsafe
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.lang.ref.WeakReference
+import kotlin.math.min
 
 object UnsafeUtils {
     @JvmStatic private var cache: GroovyKotlinCache<UnsafeUtils>? = null
@@ -73,11 +74,10 @@ object UnsafeUtils {
             result = ByteArrayInputStream(bytes, off, len)
             tempInputBufferStore.set(WeakReference(result))
         }
-        checkNotNull(unsafe)
         unsafe.putObject(result, AFIELD_ByteArrayInputStream_buf, bytes)
         unsafe.putInt(result, AFIELD_ByteArrayInputStream_pos, off)
         unsafe.putInt(result, AFIELD_ByteArrayInputStream_mark, off)
-        unsafe.putInt(result, AFIELD_ByteArrayInputStream_count, Math.min(off + len, bytes.size))
+        unsafe.putInt(result, AFIELD_ByteArrayInputStream_count, min(off + len, bytes.size))
         return result
     }
 }

@@ -13,8 +13,9 @@ import GradleScript.GroovyKotlinInteroperability.GroovyInteroperability.detachAn
 import GradleScript.GroovyKotlinInteroperability.GroovyInteroperability.detachObject
 import GradleScript.GroovyKotlinInteroperability.GroovyInteroperability.prepareGroovyKotlinCache
 import GradleScript.GroovyKotlinInteroperability.GroovyKotlinCache
+import GradleScript.GroovyKotlinInteroperability.GroovyManipulation.closureToLambda1
+import GradleScript.GroovyKotlinInteroperability.GroovyManipulation.closureToLambda2
 import GradleScript.GroovyKotlinInteroperability.GroovyManipulation.lambda1ToClosure
-import GradleScript.GroovyKotlinInteroperability.parseProperty
 import GradleScript.Strategies.CommonUtils.purgeThreadLocal
 import GradleScript.Strategies.GradleUtils.asBuildProject0
 import GradleScript.Strategies.GradleUtils.extraPropertiesRemoveKey
@@ -146,18 +147,19 @@ object Scripting {
 		val context = scriptImport.context
 		val project = context.project0
 		val imported = scriptImport.imported
-		val methods = HashMap<String, (Array<out Any?>) -> Any?>()
-		val getters = HashMap<String, (Array<out Any?>) -> Any?>()
-		val setters = HashMap<String, (Array<out Any?>) -> Any?>()
+		val properties = HashMap<String, ExportWithPropertyCallback>()
+		val methods = HashMap<String, ExportWithMethodCallback>()
 
 		scriptImport.what?.forEach { if(script.exports.find { e -> e.being == it } == null)
 			throw IllegalArgumentException("There's no such export '$it' from ${script.file}") }
 		for(export in script.exports) {
 			if(scriptImport.what != null && !scriptImport.what.contains(export.being))
 				continue
-			export.with.forEach { it(export, methods, getters, setters) }
+			export.with.forEach { it(export, properties, methods) }
 		}
-		imported.cache = prepareGroovyKotlinCache(scriptImport, methods, getters, setters)
+		val builtInCache = prepareGroovyKotlinCache(imported)
+		imported.cache = prepareGroovyKotlinCache(scriptImport, properties, methods)
+		imported.cache!!.pushed += builtInCache.pushed
 		imported.__start__()
 		attachAnyObject(imported, imported.cache!!)
 		imported.__end__()
@@ -193,31 +195,28 @@ object Scripting {
 					"import is from \"${script.file.canonicalPath}\"")
 		script.context = context
 		for(pushed in cache.pushed.values) {
-			val names = pushed.names
-			val value = pushed.closure
-			for(name in names) {
-				val (isGetter, isGetterBoolean, isSetter) = parseProperty(name)
-				val rawName = if(isGetter || isGetterBoolean || isSetter) {
-					val propertyName0 = if(isGetterBoolean) name.substring(2) else name.substring(3)
-					if(propertyName0.length <= 1) propertyName0.lowercase()
-					else if(propertyName0.uppercase() == propertyName0) propertyName0
-					else propertyName0.replaceFirstChar { it.lowercase() }
-				} else name
-//				if(rawName.startsWith("__INTERNAL_")) continue
-				var export = script.exports.find { it.being == rawName }
-				if(export == null) {
-					export = ScriptExport(script.id, ArrayList<Any>(), rawName, ArrayList())
+			if(pushed is GroovyKotlinCache.InjectedProperty) {
+				val names = pushed.implNames()
+				for(name in names) {
+					val export = ScriptExport(script.id, pushed, name, ArrayList())
 					script.exports += export
+					export.with += { exportInfo, properties, _ ->
+						val getter = if(pushed.getter != null) closureToLambda1(pushed.getter) else null
+						val setter = if(pushed.setter != null) closureToLambda2(pushed.setter as Closure<Unit>) else null
+						properties[exportInfo.being] = Pair(getter, setter)
+					}
 				}
-				(export.what as ArrayList<Any>) += value
-				if(isGetter || isGetterBoolean) export.with += { exportInfo, _, getter, _ -> getter[exportInfo.being] = { args -> value.call(*args) } }
-				if(isSetter) export.with += { exportInfo, _, _, setter -> setter[exportInfo.being] = { args -> value.call(*args) } }
-				if(!isGetter && !isGetterBoolean && !isSetter) export.with += { exportInfo, methods, _, _ -> methods[exportInfo.being] = { args -> {
-					val callback = exportInfo.what
-					if(callback is Closure<*>)
-						callback.call(*args)
-					else __invalid_type()
-				} } }
+			}
+			if(pushed is GroovyKotlinCache.InjectedMethod) {
+				val names = pushed.implNames()
+				for(name in names) {
+					val export = ScriptExport(script.id, pushed, name, ArrayList())
+					script.exports += export
+					export.with += { exportInfo, _, methods ->
+						val callback = if(pushed.callback != null) { self: Any?, args: Array<out Any?> -> pushed.callback.call(self, *args) } else null
+						methods[exportInfo.being] = callback
+					}
+				}
 			}
 		}
 	}
@@ -390,7 +389,7 @@ object Scripting {
 		return scriptExport
 	}
 	@ExportGradle @JvmStatic @JvmOverloads
-	fun scriptExport(what: Any?, being: KeywordsUtils.Being<String>, with: KeywordsUtils.With<List<ExportWith>> = with(exportGetter())): ScriptExport {
+	fun scriptExport(what: Any?, being: KeywordsUtils.Being<String>, with: KeywordsUtils.With<List<ExportWith>> = with(exportProperty())): ScriptExport {
 		return scriptExport(what, being.user, with.user)
 	}
 	@ExportGradle @JvmStatic
@@ -462,22 +461,22 @@ object Scripting {
 
 	@ExportGradle @JvmStatic
 	fun exportMethod(): List<ExportWith> {
-		return listOf { exportInfo, methods, _, _ ->
-			methods[exportInfo.being] = { args ->
+		return listOf { exportInfo, _, methods ->
+			val callback = { self: Any?, args: Array<out Any?> ->
 				val callback = exportInfo.what
 				if(callback is Closure<*>)
 					callback.call(*args)
 				else __invalid_type()
 			}
+			methods[exportInfo.being] = callback
 		}
 	}
-	@ExportGradle @JvmStatic
-	fun exportGetter(): List<ExportWith> {
-		return listOf { exportInfo, _, getters, _ -> getters[exportInfo.being] = { exportInfo.what } }
-	}
-	@ExportGradle @JvmStatic
-	fun exportSetter(): List<ExportWith> {
-		return listOf { exportInfo, _, _, setters -> setters[exportInfo.being] = { args -> exportInfo.what = args[0] } }
+	fun exportProperty(allowSetter: Boolean = false, allowGetter: Boolean = true): List<ExportWith> {
+		return listOf { exportInfo, properties, _ ->
+			val getter = if(allowGetter) { self: Any? -> exportInfo.what } else null
+			val setter = if(allowSetter) { self: Any?, value: Any? -> exportInfo.what = value } else null
+			properties[exportInfo.being] = Pair(getter, setter)
+		}
 	}
 
 	@ExportGradle @JvmStatic

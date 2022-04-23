@@ -15,32 +15,42 @@ fun destruct() {
 	GroovyManipulation.destruct()
 }
 
-// console.log(new Array(23).fill(null).map((v, i) => `typealias fn${i} = (${new Array(i).fill(null).map((_v, _i) => `Any?`).join(", ")}) -> Any?`).join("\n"))
-typealias fn0 = () -> Any?
-typealias fn1 = (Any?) -> Any?
-typealias fn2 = (Any?, Any?) -> Any?
-typealias fn3 = (Any?, Any?, Any?) -> Any?
-typealias fn4 = (Any?, Any?, Any?, Any?) -> Any?
-typealias fn5 = (Any?, Any?, Any?, Any?, Any?) -> Any?
-typealias fn6 = (Any?, Any?, Any?, Any?, Any?, Any?) -> Any?
-typealias fn7 = (Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> Any?
-typealias fn8 = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> Any?
-typealias fn9 = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> Any?
-typealias fn10 = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> Any?
-typealias fn11 = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> Any?
-typealias fn12 = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> Any?
-typealias fn13 = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> Any?
-typealias fn14 = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> Any?
-typealias fn15 = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> Any?
-typealias fn16 = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> Any?
-typealias fn17 = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> Any?
-typealias fn18 = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> Any?
-typealias fn19 = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> Any?
-typealias fn20 = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> Any?
-typealias fn21 = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> Any?
-typealias fn22 = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> Any?
-typealias fnn = FunctionN<Any?>
+// console.log(new Array(23).fill(null).map((v, i) => `typealias fn${i}<R> = (${new Array(i).fill(null).map((_v, _i) => `Any?`).join(", ")}) -> R`).join("\n"))
+typealias fn0<R> = () -> R
+typealias fn1<R> = (Any?) -> R
+typealias fn2<R> = (Any?, Any?) -> R
+typealias fn3<R> = (Any?, Any?, Any?) -> R
+typealias fn4<R> = (Any?, Any?, Any?, Any?) -> R
+typealias fn5<R> = (Any?, Any?, Any?, Any?, Any?) -> R
+typealias fn6<R> = (Any?, Any?, Any?, Any?, Any?, Any?) -> R
+typealias fn7<R> = (Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> R
+typealias fn8<R> = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> R
+typealias fn9<R> = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> R
+typealias fn10<R> = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> R
+typealias fn11<R> = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> R
+typealias fn12<R> = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> R
+typealias fn13<R> = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> R
+typealias fn14<R> = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> R
+typealias fn15<R> = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> R
+typealias fn16<R> = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> R
+typealias fn17<R> = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> R
+typealias fn18<R> = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> R
+typealias fn19<R> = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> R
+typealias fn20<R> = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> R
+typealias fn21<R> = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> R
+typealias fn22<R> = (Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?, Any?) -> R
+typealias fnn<R> = FunctionN<R>
 typealias cls<R> = Closure<R>
+
+data class PropertySymbol(val name: String)
+fun propertySymbol(name: String): PropertySymbol {
+	return PropertySymbol(name)
+}
+
+data class MethodSymbol(val name: String, val parameterTypes: Array<out Class<*>>)
+fun methodSymbol(name: String, vararg parameterTypes: Class<*>): MethodSymbol {
+	return MethodSymbol(name, parameterTypes)
+}
 
 // console.log(new Array(23).fill(null).map((v, i) => `@JvmInline value class expandImport${i}<${new Array(i).fill(null).map((v1, i1) => `R${(i1 + 1)}`).join(", ")}>(val imported: Imported) {\n${new Array(i).fill(null).map((v1, i1) => `\toperator fun component${(i1 + 1)}(): R${(i1 + 1)} { return imported["component${i1 + 1}"] as R${(i1 + 1)} }`).join("\n")}\n}`).join("\n"))
 @JvmInline value class expandImport0(val imported: Imported) {

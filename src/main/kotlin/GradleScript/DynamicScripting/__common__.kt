@@ -13,4 +13,6 @@ typealias ImportWith = (ScriptImport) -> Unit
 
 typealias ExportAction = (ScriptExport) -> Unit
 typealias UnexportAction = (ScriptExport) -> Unit
-typealias ExportWith = (ScriptExport, MutableMap<String, (Array<out Any?>) -> Any?>, MutableMap<String, (Array<out Any?>) -> Any?>, MutableMap<String, (Array<out Any?>) -> Any?>) -> Unit
+typealias ExportWithPropertyCallback = Pair<((Any?) -> Any?)?, ((Any?, Any?) -> Unit)?>
+typealias ExportWithMethodCallback =  ((Any?, Array<out Any?>) -> Any?)?
+typealias ExportWith = (ScriptExport, MutableMap<String, ExportWithPropertyCallback>, MutableMap<String, ExportWithMethodCallback>) -> Unit

@@ -160,7 +160,7 @@ object Common {
 		if(exception.suppressed.isNotEmpty())
 			throw exception
 	}
-	@ExportGradle(names=["currentSession0"], asProperty=false) @JvmStatic
+	@ExportGradle(names=["currentSession0"], asMode=2) @JvmStatic
 	fun currentSession(): Session? {
 		return currentSession
 	}

@@ -5,6 +5,8 @@ import GradleScript.DynamicScripting.Scripting.removeInjectScript
 import GradleScript.GroovyKotlinInteroperability.GroovyInteroperability.prepareGroovyKotlinCache
 import GradleScript.GroovyKotlinInteroperability.GroovyManipulation.closureToLambda
 import GradleScript.Strategies.ClassUtils.boxedToPrimitive
+import GradleScript.Strategies.ClassUtils.boxedWideningConversion
+import GradleScript.Strategies.ClassUtils.primitiveWideningConversions
 import groovy.lang.Closure
 import java.lang.reflect.Field
 import java.lang.reflect.Method
@@ -21,10 +23,19 @@ open class KotlinClosure(
 		val matched = doOverloading(overloads, args)
 		return matched.first.callback(matched.second)
 	}
+	override fun getParameterTypes(): Array<out Class<*>> {
+		return parameterTypesClashing(overloads.map { it.parameterTypes }.toTypedArray())
+	}
+	fun getReturnType(): Class<*> {
+		return typeClashing(overloads.map { it.returnType }.toTypedArray())
+	}
+
 	override fun getProperty(property: String): Any? {
 		return when(property) {
 			"name" -> name
 			"overloads" -> overloads
+			"parameterType" -> getParameterTypes()
+			"returnType" -> getReturnType()
 			else -> super.getProperty(property)
 		}
 	}
@@ -53,6 +64,7 @@ open class KotlinClosure(
 
 	open class Overload(
 		val parameterTypes: Array<out Class<*>>,
+		val returnType: Class<*>,
 		val callback: (Array<out Any?>) -> Any?,
 		var priority: Int = 0
 	) {
@@ -61,7 +73,12 @@ open class KotlinClosure(
 	open class IgnoreSelfOverload(
 		val selfClass: Class<*>,
 		val overload: Overload
-	): Overload(arrayOf(selfClass, *overload.parameterTypes), { overload.callback(it.copyOfRange(1, it.size)) }, -1) {
+	): Overload(
+		arrayOf(selfClass, *overload.parameterTypes),
+		overload.returnType,
+		{ overload.callback(it.copyOfRange(1, it.size)) },
+		-1
+	) {
 		override fun toString(): String {
 			return "^$overload"
 		}
@@ -69,7 +86,12 @@ open class KotlinClosure(
 	open class WithSelfOverload(
 		val self: Any?,
 		val overload: Overload
-	): Overload(overload.parameterTypes.copyOfRange(1, overload.parameterTypes.size), { overload.callback(arrayOf(self, *it)) }, -1) {
+	): Overload(
+		overload.parameterTypes.copyOfRange(1, overload.parameterTypes.size),
+		overload.returnType,
+		{ overload.callback(arrayOf(self, *it)) },
+		-1
+	) {
 		override fun toString(): String {
 			return "*$overload"
 		}
@@ -77,7 +99,11 @@ open class KotlinClosure(
 	open class MethodOverload(
 		val owner: Any?,
 		val method: Method
-	): Overload(method.parameterTypes, { method.invoke(owner, *it) }) {
+	): Overload(
+		method.parameterTypes,
+		method.returnType,
+		{ method.invoke(owner, *it) }
+	) {
 		override fun toString(): String {
 			return method.toString()
 		}
@@ -85,7 +111,11 @@ open class KotlinClosure(
 	open class FieldGetOverload(
 		val owner: Any?,
 		val field: Field
-	): Overload(arrayOf(), { field.get(owner) }) {
+	): Overload(
+		arrayOf(),
+		field.type,
+		{ field.get(owner) }
+	) {
 		override fun toString(): String {
 			return "get${field.toString().replaceFirstChar { c -> c.uppercase() }}"
 		}
@@ -93,14 +123,22 @@ open class KotlinClosure(
 	open class FieldSetOverload(
 		val owner: Any?,
 		val field: Field
-	): Overload(arrayOf(field.type), { field.set(owner, it[0]) }) {
+	): Overload(
+		arrayOf(field.type),
+		Unit::class.java,
+		{ field.set(owner, it[0]) }
+	) {
 		override fun toString(): String {
 			return "set${field.toString().replaceFirstChar { c -> c.uppercase() }}"
 		}
 	}
 	open class KLambdaOverload(
 		val lambda: (Array<out Any?>) -> Any?
-	): Overload(arrayOf(Array<Any?>::class.java), { val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args) }) {
+	): Overload(
+		arrayOf(Array<Any?>::class.java),
+		Any::class.java,
+		{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args) }
+	) {
 		override fun toString(): String {
 			return lambda.toString()
 		}
@@ -109,7 +147,9 @@ open class KotlinClosure(
 		val owners: Array<Any?>,
 		val function: KFunction<R>,
 		val kParameters: Array<KParameter>
-	): Overload(kParameters.filter { it.kind != KParameter.Kind.INSTANCE }.map { it.type.jvmErasure.java }.toTypedArray(),
+	): Overload(
+		kParameters.filter { it.kind != KParameter.Kind.INSTANCE }.map { it.type.jvmErasure.java }.toTypedArray(),
+		function.returnType.jvmErasure.java,
 		{
 			val args = HashMap<KParameter, Any?>();
 			var offset = 0
@@ -140,14 +180,22 @@ open class KotlinClosure(
 	}
 	open class KProperty0Overload<V>(
 		val property: KProperty0<V>
-	): Overload(arrayOf(), { property.get() }) {
+	): Overload(
+		arrayOf(),
+		property.returnType.jvmErasure.java,
+		{ property.get() }
+	) {
 		override fun toString(): String {
 			return "get${property.toString().replaceFirstChar { c -> c.uppercase() }}"
 		}
 	}
 	open class KMutableProperty0Overload<V>(
 		val property: KMutableProperty0<V>
-	): Overload(arrayOf(property.returnType.jvmErasure.java), { property.set(it[0] as V) }) {
+	): Overload(
+		arrayOf(property.returnType.jvmErasure.java),
+		Unit::class.java,
+		{ property.set(it[0] as V) }
+	) {
 		override fun toString(): String {
 			return "set${property.toString().replaceFirstChar { c -> c.uppercase() }}"
 		}
@@ -155,7 +203,11 @@ open class KotlinClosure(
 	open class KProperty1Overload<T, V>(
 		val owner: T,
 		val property: KProperty1<T, V>
-	): Overload(arrayOf(), { property.get(owner) }) {
+	): Overload(
+		arrayOf(),
+		property.returnType.jvmErasure.java,
+		{ property.get(owner) }
+	) {
 		override fun toString(): String {
 			return "get${property.toString().replaceFirstChar { c -> c.uppercase() }}"
 		}
@@ -163,7 +215,11 @@ open class KotlinClosure(
 	open class KMutableProperty1Overload<T, V>(
 		val owner: T,
 		val property: KMutableProperty1<T, V>
-	): Overload(arrayOf(property.returnType.jvmErasure.java), { property.set(owner, it[0] as V) }) {
+	): Overload(
+		arrayOf(property.returnType.jvmErasure.java),
+		Unit::class.java,
+		{ property.set(owner, it[0] as V) }
+	) {
 		override fun toString(): String {
 			return "set${property.toString().replaceFirstChar { c -> c.uppercase() }}"
 		}
@@ -172,7 +228,11 @@ open class KotlinClosure(
 		val owner1: D,
 		val owner2: E,
 		val property: KProperty2<D, E, V>
-	): Overload(arrayOf(), { property.get(owner1, owner2) }) {
+	): Overload(
+		arrayOf(),
+		property.returnType.jvmErasure.java,
+		{ property.get(owner1, owner2) }
+	) {
 		override fun toString(): String {
 			return "get${property.toString().replaceFirstChar { c -> c.uppercase() }}"
 		}
@@ -181,7 +241,11 @@ open class KotlinClosure(
 		val owner1: D,
 		val owner2: E,
 		val property: KMutableProperty2<D, E, V>
-	): Overload(arrayOf(property.returnType.jvmErasure.java), { property.set(owner1, owner2, it[0] as V) }) {
+	): Overload(
+		arrayOf(property.returnType.jvmErasure.java),
+		Unit::class.java,
+		{ property.set(owner1, owner2, it[0] as V) }
+	) {
 		override fun toString(): String {
 			return "set${property.toString().replaceFirstChar { c -> c.uppercase() }}"
 		}
@@ -241,15 +305,53 @@ open class KotlinClosure(
 				result += KMutableProperty2Overload(owner1, owner2, property)
 			return result.toTypedArray()
 		}
+		@ExportGradle @JvmStatic
+		fun typeClashing(types: Array<out Class<*>>): Class<*> {
+			if(types.isEmpty()) return Any::class.java
+			var result: Class<*> = types[0]
+			for(i in 1 until types.size) {
+				val type = types[i]
+				if(result.isAssignableFrom(type)) continue
+				if(type.isAssignableFrom(result)) { result = type; continue }
+				result = Any::class.java; break
+			}
+			return result
+		}
+		@ExportGradle @JvmStatic
+		fun parameterTypesClashing(argumentTypes: Array<Array<out Class<*>>>): Array<out Class<*>> {
+			val distinctLength = argumentTypes.map { it.size }.distinct()
+			if(distinctLength.isEmpty()) return arrayOf()
+			if(distinctLength.size > 1) return arrayOf(Array<Any?>::class.java)
+			val length = distinctLength[0]
+			return arrayOfNulls<Array<Class<*>>>(length)
+				.mapIndexed { i, _ -> argumentTypes.map { it[i] }.toTypedArray() }
+				.map { typeClashing(it) }.toTypedArray()
+		}
+		@ExportGradle @JvmStatic
+		fun flattenVararg(args: Array<out Any?>): Array<out Any?> {
+			if(args.isEmpty()) return args
+			val last = args.last()!!
+			if(!last.javaClass.isArray) return args
+			return arrayOf(*args.copyOfRange(0, args.size - 1), *(last as Array<Any?>))
+		}
+		@ExportGradle @JvmStatic
+		inline fun <reified T> kotlinReifiedType(type: KClass<*>): Class<*> {
+			val typeJava = type.java
+			if(null is T || (type as? KType)?.isMarkedNullable == true) return typeJava
+			return boxedToPrimitive[typeJava] ?: typeJava
+		}
 		@JvmStatic val emptyArr = emptyArray<Any?>()
+		// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.3
+		// Some rules are based on docs, but there are some cases that have been modified
+		// See further comments for details.
 		@ExportGradle @JvmStatic
 		fun doOverloading(overloads: List<Overload>, args: Array<out Any?>): Pair<Overload, Array<Any?>> {
 			data class CallData(
 				var overload: Overload,
 				var args: Array<Any?> = emptyArr,
 				var error: String? = null,
-				var notExactMatchCount: Int = 0,
-				var changedArgsCount: Int = 0
+				var changedArgsCount: Int = 0,
+				var notExactMatchCount: Int = 0
 			)
 			/* Length analysis
 			 * n-1, if last param is vararg, then that vararg's length is 0
@@ -300,70 +402,119 @@ open class KotlinClosure(
 				for(i in types.indices) {
 					val type = types[i]
 					val arg = tryChangeArg(data, if(i < args.size) args[i] else null, type)
+					val argType = arg?.javaClass
+					val primitiveArgType = if(argType != null) if(argType.isPrimitive) argType else boxedToPrimitive[argType] else null
 					// Strict primitive checking
 					if(type.isPrimitive) {
-						if(arg == null) {
+						if(argType == null) {
 							data.error = "Cannot cast null to $type (primitive)"
 							continue@Outer
 						}
-						if(!boxedToPrimitive.containsKey(arg.javaClass)) {
-							data.error = "Cannot cast ${arg.javaClass} to $type (primitive)"
+						if(primitiveArgType == null) {
+							data.error = "Cannot cast $argType to $type (primitive)"
 							continue@Outer
 						}
-						pushArg(data, i, arg)
+						if(!primitiveWideningConversions[primitiveArgType]!!.contains(type)) {
+							data.error = "Cannot widening conversion $argType to $type (primitive)"
+							continue@Outer
+						}
+						if(primitiveArgType != type) {
+							// TODO: The cost of widening conversions
+							// Suppose this setup:
+							// ```
+							// fun test(Int)
+							// fun test(Long)
+							// test(Byte)
+							// ```
+							// `fun(Int)` will be called instead of `fun(Long)`. Because the cost of widening conversions is smaller.
+							// In this algorithm, that call will be resulting in an error because of ambiguity. the cost of widening
+							// conversions is not been accounted, yet.
+							data.changedArgsCount++
+							val widenedConversion = boxedWideningConversion(arg, type)
+							pushArg(data, i, widenedConversion)
+						} else
+							pushArg(data, i, arg)
 						continue
 					}
 					// Empty vararg
 					if(type.isArray && i == args.size) {
 						val componentType = type.componentType
-						if(i != types.size - 1) {
-							data.error = "Vararg must be at the end of parameters"
-							continue@Outer
-						}
 						data.notExactMatchCount++
 						val vararg = java.lang.reflect.Array.newInstance(componentType, 0)
 						pushArg(data, i, vararg)
 						continue
 					}
+					// Non-empty vararg
+					if(type.isArray) {
+						val componentType = type.componentType
+						// `null` is the last arguments
+						if(argType == null && i == args.size - 1) {
+							if(!componentType.isPrimitive) {
+								// Can call with null member to vararg, by making the array explicitly.
+//								data.error = "Ambiguous cast null to $type, unclear if a varargs or non-varargs call is desired"
+								data.notExactMatchCount++
+								pushArg(data, i, null)
+								continue
+							} else {
+								// Plain old java will make this call ambiguous, but since the component type can't be null,
+								// it does make sense that the array is null. But I might change this later.
+								data.notExactMatchCount++
+								pushArg(data, i, null)
+								continue
+							}
+						}
+						if(if(componentType.isPrimitive) {
+							if(primitiveArgType == null) false
+							else componentType.isAssignableFrom(primitiveArgType) || primitiveWideningConversions[primitiveArgType]!!.contains(componentType)
+						} else argType == null || componentType.isAssignableFrom(argType)) {
+							val vararg = java.lang.reflect.Array.newInstance(componentType, args.size - i)
+							for(j in i until args.size) {
+								val varargv = args[j]
+								val varargvType = varargv?.javaClass
+								val primitiveVarargvType = if(varargvType != null) if(varargvType.isPrimitive) varargvType else boxedToPrimitive[varargvType] else null
+								if(componentType.isPrimitive) {
+									if(varargvType == null) {
+										data.error = "Cannot cast null to $componentType (primitive) [vararg $j]"
+										continue@Outer
+									}
+									if(primitiveVarargvType == null) {
+										data.error = "Cannot cast $varargvType to $componentType (primitive) [vararg $j]"
+										continue@Outer
+									}
+									if(!primitiveWideningConversions[primitiveVarargvType]!!.contains(componentType)) {
+										data.error = "Cannot widening conversion $varargvType to $componentType (primitive) [vararg $j]"
+										continue@Outer
+									}
+									if(primitiveVarargvType != componentType) {
+										data.changedArgsCount++
+										val widenedConversion = boxedWideningConversion(varargv, componentType)
+										java.lang.reflect.Array.set(vararg, j - i, widenedConversion)
+									} else
+										java.lang.reflect.Array.set(vararg, j - i, varargv)
+									continue
+								}
+								if(varargvType == null || componentType.isAssignableFrom(varargvType)) {
+									if(varargvType != null && componentType != varargvType)
+										data.notExactMatchCount++
+									java.lang.reflect.Array.set(vararg, j - i, varargv)
+									continue
+								}
+								data.error = "Cannot cast $varargvType to $componentType [vararg $j]"
+								continue@Outer
+							}
+							data.changedArgsCount++
+							pushArg(data, i, vararg)
+							continue
+						}
+					}
 					// Inheritance
-					if(arg == null || type.isAssignableFrom(arg.javaClass)) {
-						if(arg != null && type != arg.javaClass)
+					if(argType == null || type.isAssignableFrom(argType)) {
+						if(argType != null && type != argType)
 							data.notExactMatchCount++
 						pushArg(data, i, arg)
 						continue
 					}
-					// Non-empty vararg
-					if(type.isArray && type.componentType.isAssignableFrom(arg.javaClass)) {
-						val componentType = type.componentType
-						if(i != types.size - 1) {
-							data.error = "Vararg must be at the end of parameters"
-							continue@Outer
-						}
-						for(j in i until args.size) {
-							val varargv = args[j]
-							if(componentType.isPrimitive) {
-								if(varargv == null) {
-									data.error = "Cannot cast null to $componentType (primitive) [vararg $j]"
-									continue@Outer
-								}
-								if(!boxedToPrimitive.containsKey(varargv.javaClass)) {
-									data.error = "Cannot cast ${varargv.javaClass} to $componentType (primitive) [vararg $j]"
-									continue@Outer
-								}
-								continue
-							}
-							if(varargv == null || componentType.isAssignableFrom(varargv.javaClass))
-								continue
-							data.error = "Cannot cast ${varargv.javaClass} to $componentType [vararg $j]"
-							continue@Outer
-						}
-						data.changedArgsCount++
-						val vararg = java.lang.reflect.Array.newInstance(componentType, args.size - i)
-						System.arraycopy(args, i, vararg, 0, java.lang.reflect.Array.getLength(vararg))
-						pushArg(data, i, vararg)
-						continue
-					}
-					data.error = "Cannot cast ${arg.javaClass} to $type"
+					data.error = "Cannot cast $argType to $type"
 					continue@Outer
 				}
 			}
@@ -374,26 +525,26 @@ open class KotlinClosure(
 						"Filtered overloads: \n${filteredOverloads.joinToString("\n") { "\t- ${it.overload} (${it.error})" }}\n" +
 						"Non-filtered overloads: \n${overloads.filter { o -> filteredOverloads.find { it.overload == o } == null }.joinToString("\n") { "\t- $it" }}")
 			if(notError.size > 1) {
-				/* Prefer not exact minimum
-				 */
-				val minNotExactMatchCount = notError.minOf { it.notExactMatchCount }
-				val notExactMatch = notError.filter { it.notExactMatchCount == minNotExactMatchCount }
-				if(notExactMatch.size == 1) {
-					val first = notExactMatch.first()
-					return Pair(first.overload, first.args)
-				}
 				/* Prefer args not changed
 				 */
-				val minChangedArgsCount = notExactMatch.minOf { it.changedArgsCount }
-				val notChangedArgs = notExactMatch.filter { it.changedArgsCount == minChangedArgsCount }
+				val minChangedArgsCount = notError.minOf { it.changedArgsCount }
+				val notChangedArgs = notError.filter { it.changedArgsCount == minChangedArgsCount }
 				if(notChangedArgs.size == 1) {
 					val first = notChangedArgs.first()
 					return Pair(first.overload, first.args)
 				}
+				/* Prefer not exact minimum
+				 */
+				val minNotExactMatchCount = notChangedArgs.minOf { it.notExactMatchCount }
+				val notExactMatch = notChangedArgs.filter { it.notExactMatchCount == minNotExactMatchCount }
+				if(notExactMatch.size == 1) {
+					val first = notExactMatch.first()
+					return Pair(first.overload, first.args)
+				}
 				/* Prefer exact maximum
 				 */
-				val maxExactCount = notChangedArgs.maxOf { it.args.size }
-				val maxExactArgs = notChangedArgs.filter { it.args.size == maxExactCount }
+				val maxExactCount = notExactMatch.maxOf { it.args.size }
+				val maxExactArgs = notExactMatch.filter { it.args.size == maxExactCount }
 				if(maxExactArgs.size == 1) {
 					val first = maxExactArgs.first()
 					return Pair(first.overload, first.args)

@@ -9,6 +9,7 @@ import GradleScript.GroovyKotlinInteroperability.GroovyKotlinCache
 import GradleScript.Strategies.ClassUtils.metaClassFor
 import GradleScript.Strategies.UnsafeUtils.unsafe
 import GradleScript.Strategies.Utils.__invalid_type
+import GradleScript.Strategies.Utils.__must_not_happen
 import GradleScript.Strategies.Utils.__unimplemented
 import groovy.lang.Closure
 import org.gradle.BuildListener
@@ -54,6 +55,7 @@ import org.gradle.process.ExecSpec
 import org.gradle.process.JavaExecSpec
 import java.io.File
 import java.lang.management.ManagementFactory
+import java.lang.reflect.Field
 import java.net.URI
 import java.util.concurrent.Callable
 
@@ -203,7 +205,13 @@ object GradleUtils {
 
 	// Kotlin DSL
 	fun <T: Any> kotlinScriptHostTarget(script: DefaultKotlinScript): T? {
-		val FIELD_UNKNOWN_host = script.javaClass.superclass.getDeclaredField("host")
+		var CLASS_currentClass: Class<*> = script.javaClass
+		var FIELD_UNKNOWN_host: Field? = null
+		do {
+			try { FIELD_UNKNOWN_host = CLASS_currentClass.getDeclaredField("host")
+			} catch(e: NoSuchFieldException) { CLASS_currentClass = CLASS_currentClass.superclass }
+		} while(FIELD_UNKNOWN_host == null && CLASS_currentClass != Any::class.java)
+		if(FIELD_UNKNOWN_host == null) throw __must_not_happen()
 		if(!KotlinScriptHost::class.java.isAssignableFrom(FIELD_UNKNOWN_host.type)) throw __invalid_type()
 		FIELD_UNKNOWN_host.isAccessible = true
 		return (FIELD_UNKNOWN_host.get(script) as KotlinScriptHost<T>).target

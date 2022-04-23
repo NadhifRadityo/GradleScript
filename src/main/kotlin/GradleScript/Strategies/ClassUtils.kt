@@ -42,6 +42,15 @@ object ClassUtils {
 		Char::class.javaPrimitiveType!! to Char::class.javaObjectType,
 		Byte::class.javaPrimitiveType!! to Byte::class.javaObjectType,
 		Boolean::class.javaPrimitiveType!! to Boolean::class.javaObjectType)
+	@ExportGradle @JvmStatic
+	val primitiveWideningConversions = mapOf<Class<*>, Array<Class<*>>>(
+		Byte::class.javaPrimitiveType!! to arrayOf(Byte::class.javaPrimitiveType!!, Short::class.javaPrimitiveType!!, Int::class.javaPrimitiveType!!, Long::class.javaPrimitiveType!!, Float::class.javaPrimitiveType!!, Double::class.javaPrimitiveType!!),
+		Short::class.javaPrimitiveType!! to arrayOf(Short::class.javaPrimitiveType!!, Int::class.javaPrimitiveType!!, Long::class.javaPrimitiveType!!, Float::class.javaPrimitiveType!!, Double::class.javaPrimitiveType!!),
+		Char::class.javaPrimitiveType!! to arrayOf(Char::class.javaPrimitiveType!!, Int::class.javaPrimitiveType!!, Long::class.javaPrimitiveType!!, Float::class.javaPrimitiveType!!, Double::class.javaPrimitiveType!!),
+		Int::class.javaPrimitiveType!! to arrayOf(Int::class.javaPrimitiveType!!, Long::class.javaPrimitiveType!!, Float::class.javaPrimitiveType!!, Double::class.javaPrimitiveType!!),
+		Long::class.javaPrimitiveType!! to arrayOf(Long::class.javaPrimitiveType!!, Float::class.javaPrimitiveType!!, Double::class.javaPrimitiveType!!),
+		Float::class.javaPrimitiveType!! to arrayOf(Float::class.javaPrimitiveType!!, Double::class.javaPrimitiveType!!),
+		Double::class.javaPrimitiveType!! to arrayOf(Double::class.javaPrimitiveType!!))
 
 	@JvmStatic
 	fun construct() {
@@ -152,5 +161,50 @@ object ClassUtils {
 			defaultNotPackageFilter.find { className.startsWith(it) } == null &&
 					notFilter.find { className.startsWith(it) } == null
 		}?.className
+	}
+
+	@ExportGradle @JvmStatic
+	fun boxedWideningConversion(value: Any, type: Class<*>): Any {
+		if(value is Byte) {
+			if(type == Byte::class.java) return value.toByte()
+			if(type == Short::class.java) return value.toShort()
+			if(type == Int::class.java) return value.toInt()
+			if(type == Long::class.java) return value.toLong()
+			if(type == Float::class.java) return value.toFloat()
+			if(type == Double::class.java) return value.toDouble()
+		}
+		if(value is Short) {
+			if(type == Short::class.java) return value.toShort()
+			if(type == Int::class.java) return value.toInt()
+			if(type == Long::class.java) return value.toLong()
+			if(type == Float::class.java) return value.toFloat()
+			if(type == Double::class.java) return value.toDouble()
+		}
+		if(value is Char) {
+			if(type == Char::class.java) return value.toChar()
+			if(type == Int::class.java) return value.toInt()
+			if(type == Long::class.java) return value.toLong()
+			if(type == Float::class.java) return value.toFloat()
+			if(type == Double::class.java) return value.toDouble()
+		}
+		if(value is Int) {
+			if(type == Int::class.java) return value.toInt()
+			if(type == Long::class.java) return value.toLong()
+			if(type == Float::class.java) return value.toFloat()
+			if(type == Double::class.java) return value.toDouble()
+		}
+		if(value is Long) {
+			if(type == Long::class.java) return value.toLong()
+			if(type == Float::class.java) return value.toFloat()
+			if(type == Double::class.java) return value.toDouble()
+		}
+		if(value is Float) {
+			if(type == Float::class.java) return value.toFloat()
+			if(type == Double::class.java) return value.toDouble()
+		}
+		if(value is Double) {
+			if(type == Double::class.java) return value.toDouble()
+		}
+		throw ClassCastException("Cannot widening conversion from ${value.javaClass} to $type")
 	}
 }

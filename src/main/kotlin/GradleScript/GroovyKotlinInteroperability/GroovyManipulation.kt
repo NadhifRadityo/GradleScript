@@ -2,6 +2,7 @@ package GradleScript.GroovyKotlinInteroperability
 
 import GradleScript.Common.groovyKotlinCaches
 import GradleScript.GroovyKotlinInteroperability.GroovyInteroperability.prepareGroovyKotlinCache
+import GradleScript.GroovyKotlinInteroperability.KotlinClosure.KotlinClosureUtils.kotlinReifiedType
 import GradleScript.Strategies.ClassUtils.metaClassFor
 import GradleScript.Strategies.Utils.__invalid_type
 import GradleScript.Strategies.Utils.__must_not_happen
@@ -14,6 +15,7 @@ import org.codehaus.groovy.runtime.metaclass.MetaMethodIndex
 import org.gradle.api.Project
 import java.lang.reflect.Modifier
 import kotlin.jvm.functions.FunctionN
+import kotlin.reflect.*
 
 object GroovyManipulation {
 	@JvmStatic private var cache: GroovyKotlinCache<GroovyManipulation>? = null
@@ -31,341 +33,393 @@ object GroovyManipulation {
 
 	/*
 	console.log(new Array(23).fill(null).map((v, i) => `@ExportGradle @JvmStatic
-	fun closureToLambda${i}(closure: Closure<*>): fn${i} {
+	fun <R> closureToLambda${i}(closure: Closure<R>): fn${i}<R> {
 		return { ${new Array(i).fill(null).map((_v, _i) => `a${_i + 1}`).join(", ")} -> closure.call(${new Array(i).fill(null).map((_v, _i) => `a${_i + 1}`).join(", ")}) }
 	}`).join("\n"))
 	 */
 	@ExportGradle @JvmStatic
-	fun closureToLambda0(closure: Closure<*>): fn0 {
+	fun <R> closureToLambda0(closure: Closure<R>): fn0<R> {
 		return {  -> closure.call() }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda1(closure: Closure<*>): fn1 {
+	fun <R> closureToLambda1(closure: Closure<R>): fn1<R> {
 		return { a1 -> closure.call(a1) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda2(closure: Closure<*>): fn2 {
+	fun <R> closureToLambda2(closure: Closure<R>): fn2<R> {
 		return { a1, a2 -> closure.call(a1, a2) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda3(closure: Closure<*>): fn3 {
+	fun <R> closureToLambda3(closure: Closure<R>): fn3<R> {
 		return { a1, a2, a3 -> closure.call(a1, a2, a3) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda4(closure: Closure<*>): fn4 {
+	fun <R> closureToLambda4(closure: Closure<R>): fn4<R> {
 		return { a1, a2, a3, a4 -> closure.call(a1, a2, a3, a4) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda5(closure: Closure<*>): fn5 {
+	fun <R> closureToLambda5(closure: Closure<R>): fn5<R> {
 		return { a1, a2, a3, a4, a5 -> closure.call(a1, a2, a3, a4, a5) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda6(closure: Closure<*>): fn6 {
+	fun <R> closureToLambda6(closure: Closure<R>): fn6<R> {
 		return { a1, a2, a3, a4, a5, a6 -> closure.call(a1, a2, a3, a4, a5, a6) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda7(closure: Closure<*>): fn7 {
+	fun <R> closureToLambda7(closure: Closure<R>): fn7<R> {
 		return { a1, a2, a3, a4, a5, a6, a7 -> closure.call(a1, a2, a3, a4, a5, a6, a7) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda8(closure: Closure<*>): fn8 {
+	fun <R> closureToLambda8(closure: Closure<R>): fn8<R> {
 		return { a1, a2, a3, a4, a5, a6, a7, a8 -> closure.call(a1, a2, a3, a4, a5, a6, a7, a8) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda9(closure: Closure<*>): fn9 {
+	fun <R> closureToLambda9(closure: Closure<R>): fn9<R> {
 		return { a1, a2, a3, a4, a5, a6, a7, a8, a9 -> closure.call(a1, a2, a3, a4, a5, a6, a7, a8, a9) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda10(closure: Closure<*>): fn10 {
+	fun <R> closureToLambda10(closure: Closure<R>): fn10<R> {
 		return { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 -> closure.call(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda11(closure: Closure<*>): fn11 {
+	fun <R> closureToLambda11(closure: Closure<R>): fn11<R> {
 		return { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11 -> closure.call(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda12(closure: Closure<*>): fn12 {
+	fun <R> closureToLambda12(closure: Closure<R>): fn12<R> {
 		return { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12 -> closure.call(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda13(closure: Closure<*>): fn13 {
+	fun <R> closureToLambda13(closure: Closure<R>): fn13<R> {
 		return { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13 -> closure.call(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda14(closure: Closure<*>): fn14 {
+	fun <R> closureToLambda14(closure: Closure<R>): fn14<R> {
 		return { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14 -> closure.call(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda15(closure: Closure<*>): fn15 {
+	fun <R> closureToLambda15(closure: Closure<R>): fn15<R> {
 		return { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15 -> closure.call(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda16(closure: Closure<*>): fn16 {
+	fun <R> closureToLambda16(closure: Closure<R>): fn16<R> {
 		return { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16 -> closure.call(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda17(closure: Closure<*>): fn17 {
+	fun <R> closureToLambda17(closure: Closure<R>): fn17<R> {
 		return { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17 -> closure.call(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda18(closure: Closure<*>): fn18 {
+	fun <R> closureToLambda18(closure: Closure<R>): fn18<R> {
 		return { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18 -> closure.call(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda19(closure: Closure<*>): fn19 {
+	fun <R> closureToLambda19(closure: Closure<R>): fn19<R> {
 		return { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19 -> closure.call(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda20(closure: Closure<*>): fn20 {
+	fun <R> closureToLambda20(closure: Closure<R>): fn20<R> {
 		return { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20 -> closure.call(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda21(closure: Closure<*>): fn21 {
+	fun <R> closureToLambda21(closure: Closure<R>): fn21<R> {
 		return { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21 -> closure.call(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambda22(closure: Closure<*>): fn22 {
+	fun <R> closureToLambda22(closure: Closure<R>): fn22<R> {
 		return { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22 -> closure.call(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22) }
 	}
 	@ExportGradle @JvmStatic
-	fun closureToLambdaN(closure: Closure<*>, arity: Int): fnn {
-		return object: fnn {
+	fun <R> closureToLambdaN(closure: Closure<R>, arity: Int): fnn<R> {
+		return object: fnn<R> {
 			override val arity: Int
 				get() = arity
 
-			override fun invoke(vararg args: Any?): Any? {
+			override fun invoke(vararg args: Any?): R {
 				return closure.call(*args)
 			}
 		}
 	}
 
+	inline fun <reified T> krt(type: KClass<*>): Class<*> {
+		return kotlinReifiedType<T>(type)
+	}
 	/*
 	console.log(new Array(23).fill().map((v, i) => `@ExportGradle @JvmStatic
-	inline fun <${new Array(i).fill().map((_v, _i) => `reified a${_i + 1}`).join(", ")}${i == 0 ? "" : ", "}R> lambda${i}ToClosure(noinline lambda: (${new Array(i).fill().map((_v, _i) => `a${_i + 1}`).join(", ")}) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(${new Array(i).fill().map((_v, _i) => `a${_i + 1}::class.java`).join(", ")}),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(${new Array(i).fill().map((_v, _i) => `args[${_i + 1}] as a${_i + 1}`).join(", ")}) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <${new Array(i).fill().map((_v, _i) => `reified A${_i}`).join(", ")}${i == 0 ? "" : ", "}reified R> lambda${i}ToOverload(noinline lambda: (${new Array(i).fill().map((_v, _i) => `A${_i}`).join(", ")}) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+            arrayOf(${new Array(i).fill().map((_v, _i) => `krt<A${_i}>(A${_i}::class)`).join(", ")}), R::class.java,
+			{ lambda(${new Array(i).fill().map((_v, _i) => `it[${_i}] as A${_i}`).join(", ")}) }
+        ) { override fun toString(): String { return "(${new Array(i).fill().map((_v, _i) => `\${A${_i}::class}`).join(", ")}) -> \${R::class}" } }
 	}`).join("\n"))
 	 */
 	@ExportGradle @JvmStatic
-	inline fun <R> lambda0ToClosure(noinline lambda: () -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda() }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified R> lambda0ToOverload(noinline lambda: () -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(), R::class.java,
+			{ lambda() }
+		) { override fun toString(): String { return "() -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, R> lambda1ToClosure(noinline lambda: (a1) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified R> lambda1ToOverload(noinline lambda: (A0) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class)), R::class.java,
+			{ lambda(it[0] as A0) }
+		) { override fun toString(): String { return "(${A0::class}) -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, reified a2, R> lambda2ToClosure(noinline lambda: (a1, a2) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java, a2::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1, args[2] as a2) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified A1, reified R> lambda2ToOverload(noinline lambda: (A0, A1) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class), krt<A1>(A1::class)), R::class.java,
+			{ lambda(it[0] as A0, it[1] as A1) }
+		) { override fun toString(): String { return "(${A0::class}, ${A1::class}) -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, reified a2, reified a3, R> lambda3ToClosure(noinline lambda: (a1, a2, a3) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java, a2::class.java, a3::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1, args[2] as a2, args[3] as a3) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified A1, reified A2, reified R> lambda3ToOverload(noinline lambda: (A0, A1, A2) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class), krt<A1>(A1::class), krt<A2>(A2::class)), R::class.java,
+			{ lambda(it[0] as A0, it[1] as A1, it[2] as A2) }
+		) { override fun toString(): String { return "(${A0::class}, ${A1::class}, ${A2::class}) -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, reified a2, reified a3, reified a4, R> lambda4ToClosure(noinline lambda: (a1, a2, a3, a4) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java, a2::class.java, a3::class.java, a4::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1, args[2] as a2, args[3] as a3, args[4] as a4) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified R> lambda4ToOverload(noinline lambda: (A0, A1, A2, A3) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class), krt<A1>(A1::class), krt<A2>(A2::class), krt<A3>(A3::class)), R::class.java,
+			{ lambda(it[0] as A0, it[1] as A1, it[2] as A2, it[3] as A3) }
+		) { override fun toString(): String { return "(${A0::class}, ${A1::class}, ${A2::class}, ${A3::class}) -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, reified a2, reified a3, reified a4, reified a5, R> lambda5ToClosure(noinline lambda: (a1, a2, a3, a4, a5) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java, a2::class.java, a3::class.java, a4::class.java, a5::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1, args[2] as a2, args[3] as a3, args[4] as a4, args[5] as a5) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified R> lambda5ToOverload(noinline lambda: (A0, A1, A2, A3, A4) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class), krt<A1>(A1::class), krt<A2>(A2::class), krt<A3>(A3::class), krt<A4>(A4::class)), R::class.java,
+			{ lambda(it[0] as A0, it[1] as A1, it[2] as A2, it[3] as A3, it[4] as A4) }
+		) { override fun toString(): String { return "(${A0::class}, ${A1::class}, ${A2::class}, ${A3::class}, ${A4::class}) -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, reified a2, reified a3, reified a4, reified a5, reified a6, R> lambda6ToClosure(noinline lambda: (a1, a2, a3, a4, a5, a6) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java, a2::class.java, a3::class.java, a4::class.java, a5::class.java, a6::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1, args[2] as a2, args[3] as a3, args[4] as a4, args[5] as a5, args[6] as a6) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified R> lambda6ToOverload(noinline lambda: (A0, A1, A2, A3, A4, A5) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class), krt<A1>(A1::class), krt<A2>(A2::class), krt<A3>(A3::class), krt<A4>(A4::class), krt<A5>(A5::class)), R::class.java,
+			{ lambda(it[0] as A0, it[1] as A1, it[2] as A2, it[3] as A3, it[4] as A4, it[5] as A5) }
+		) { override fun toString(): String { return "(${A0::class}, ${A1::class}, ${A2::class}, ${A3::class}, ${A4::class}, ${A5::class}) -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, reified a2, reified a3, reified a4, reified a5, reified a6, reified a7, R> lambda7ToClosure(noinline lambda: (a1, a2, a3, a4, a5, a6, a7) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java, a2::class.java, a3::class.java, a4::class.java, a5::class.java, a6::class.java, a7::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1, args[2] as a2, args[3] as a3, args[4] as a4, args[5] as a5, args[6] as a6, args[7] as a7) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified R> lambda7ToOverload(noinline lambda: (A0, A1, A2, A3, A4, A5, A6) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class), krt<A1>(A1::class), krt<A2>(A2::class), krt<A3>(A3::class), krt<A4>(A4::class), krt<A5>(A5::class), krt<A6>(A6::class)), R::class.java,
+			{ lambda(it[0] as A0, it[1] as A1, it[2] as A2, it[3] as A3, it[4] as A4, it[5] as A5, it[6] as A6) }
+		) { override fun toString(): String { return "(${A0::class}, ${A1::class}, ${A2::class}, ${A3::class}, ${A4::class}, ${A5::class}, ${A6::class}) -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, reified a2, reified a3, reified a4, reified a5, reified a6, reified a7, reified a8, R> lambda8ToClosure(noinline lambda: (a1, a2, a3, a4, a5, a6, a7, a8) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java, a2::class.java, a3::class.java, a4::class.java, a5::class.java, a6::class.java, a7::class.java, a8::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1, args[2] as a2, args[3] as a3, args[4] as a4, args[5] as a5, args[6] as a6, args[7] as a7, args[8] as a8) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified R> lambda8ToOverload(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class), krt<A1>(A1::class), krt<A2>(A2::class), krt<A3>(A3::class), krt<A4>(A4::class), krt<A5>(A5::class), krt<A6>(A6::class), krt<A7>(A7::class)), R::class.java,
+			{ lambda(it[0] as A0, it[1] as A1, it[2] as A2, it[3] as A3, it[4] as A4, it[5] as A5, it[6] as A6, it[7] as A7) }
+		) { override fun toString(): String { return "(${A0::class}, ${A1::class}, ${A2::class}, ${A3::class}, ${A4::class}, ${A5::class}, ${A6::class}, ${A7::class}) -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, reified a2, reified a3, reified a4, reified a5, reified a6, reified a7, reified a8, reified a9, R> lambda9ToClosure(noinline lambda: (a1, a2, a3, a4, a5, a6, a7, a8, a9) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java, a2::class.java, a3::class.java, a4::class.java, a5::class.java, a6::class.java, a7::class.java, a8::class.java, a9::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1, args[2] as a2, args[3] as a3, args[4] as a4, args[5] as a5, args[6] as a6, args[7] as a7, args[8] as a8, args[9] as a9) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified R> lambda9ToOverload(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class), krt<A1>(A1::class), krt<A2>(A2::class), krt<A3>(A3::class), krt<A4>(A4::class), krt<A5>(A5::class), krt<A6>(A6::class), krt<A7>(A7::class), krt<A8>(A8::class)), R::class.java,
+			{ lambda(it[0] as A0, it[1] as A1, it[2] as A2, it[3] as A3, it[4] as A4, it[5] as A5, it[6] as A6, it[7] as A7, it[8] as A8) }
+		) { override fun toString(): String { return "(${A0::class}, ${A1::class}, ${A2::class}, ${A3::class}, ${A4::class}, ${A5::class}, ${A6::class}, ${A7::class}, ${A8::class}) -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, reified a2, reified a3, reified a4, reified a5, reified a6, reified a7, reified a8, reified a9, reified a10, R> lambda10ToClosure(noinline lambda: (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java, a2::class.java, a3::class.java, a4::class.java, a5::class.java, a6::class.java, a7::class.java, a8::class.java, a9::class.java, a10::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1, args[2] as a2, args[3] as a3, args[4] as a4, args[5] as a5, args[6] as a6, args[7] as a7, args[8] as a8, args[9] as a9, args[10] as a10) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified R> lambda10ToOverload(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class), krt<A1>(A1::class), krt<A2>(A2::class), krt<A3>(A3::class), krt<A4>(A4::class), krt<A5>(A5::class), krt<A6>(A6::class), krt<A7>(A7::class), krt<A8>(A8::class), krt<A9>(A9::class)), R::class.java,
+			{ lambda(it[0] as A0, it[1] as A1, it[2] as A2, it[3] as A3, it[4] as A4, it[5] as A5, it[6] as A6, it[7] as A7, it[8] as A8, it[9] as A9) }
+		) { override fun toString(): String { return "(${A0::class}, ${A1::class}, ${A2::class}, ${A3::class}, ${A4::class}, ${A5::class}, ${A6::class}, ${A7::class}, ${A8::class}, ${A9::class}) -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, reified a2, reified a3, reified a4, reified a5, reified a6, reified a7, reified a8, reified a9, reified a10, reified a11, R> lambda11ToClosure(noinline lambda: (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java, a2::class.java, a3::class.java, a4::class.java, a5::class.java, a6::class.java, a7::class.java, a8::class.java, a9::class.java, a10::class.java, a11::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1, args[2] as a2, args[3] as a3, args[4] as a4, args[5] as a5, args[6] as a6, args[7] as a7, args[8] as a8, args[9] as a9, args[10] as a10, args[11] as a11) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified R> lambda11ToOverload(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class), krt<A1>(A1::class), krt<A2>(A2::class), krt<A3>(A3::class), krt<A4>(A4::class), krt<A5>(A5::class), krt<A6>(A6::class), krt<A7>(A7::class), krt<A8>(A8::class), krt<A9>(A9::class), krt<A10>(A10::class)), R::class.java,
+			{ lambda(it[0] as A0, it[1] as A1, it[2] as A2, it[3] as A3, it[4] as A4, it[5] as A5, it[6] as A6, it[7] as A7, it[8] as A8, it[9] as A9, it[10] as A10) }
+		) { override fun toString(): String { return "(${A0::class}, ${A1::class}, ${A2::class}, ${A3::class}, ${A4::class}, ${A5::class}, ${A6::class}, ${A7::class}, ${A8::class}, ${A9::class}, ${A10::class}) -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, reified a2, reified a3, reified a4, reified a5, reified a6, reified a7, reified a8, reified a9, reified a10, reified a11, reified a12, R> lambda12ToClosure(noinline lambda: (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java, a2::class.java, a3::class.java, a4::class.java, a5::class.java, a6::class.java, a7::class.java, a8::class.java, a9::class.java, a10::class.java, a11::class.java, a12::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1, args[2] as a2, args[3] as a3, args[4] as a4, args[5] as a5, args[6] as a6, args[7] as a7, args[8] as a8, args[9] as a9, args[10] as a10, args[11] as a11, args[12] as a12) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified R> lambda12ToOverload(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class), krt<A1>(A1::class), krt<A2>(A2::class), krt<A3>(A3::class), krt<A4>(A4::class), krt<A5>(A5::class), krt<A6>(A6::class), krt<A7>(A7::class), krt<A8>(A8::class), krt<A9>(A9::class), krt<A10>(A10::class), krt<A11>(A11::class)), R::class.java,
+			{ lambda(it[0] as A0, it[1] as A1, it[2] as A2, it[3] as A3, it[4] as A4, it[5] as A5, it[6] as A6, it[7] as A7, it[8] as A8, it[9] as A9, it[10] as A10, it[11] as A11) }
+		) { override fun toString(): String { return "(${A0::class}, ${A1::class}, ${A2::class}, ${A3::class}, ${A4::class}, ${A5::class}, ${A6::class}, ${A7::class}, ${A8::class}, ${A9::class}, ${A10::class}, ${A11::class}) -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, reified a2, reified a3, reified a4, reified a5, reified a6, reified a7, reified a8, reified a9, reified a10, reified a11, reified a12, reified a13, R> lambda13ToClosure(noinline lambda: (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java, a2::class.java, a3::class.java, a4::class.java, a5::class.java, a6::class.java, a7::class.java, a8::class.java, a9::class.java, a10::class.java, a11::class.java, a12::class.java, a13::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1, args[2] as a2, args[3] as a3, args[4] as a4, args[5] as a5, args[6] as a6, args[7] as a7, args[8] as a8, args[9] as a9, args[10] as a10, args[11] as a11, args[12] as a12, args[13] as a13) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified A12, reified R> lambda13ToOverload(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class), krt<A1>(A1::class), krt<A2>(A2::class), krt<A3>(A3::class), krt<A4>(A4::class), krt<A5>(A5::class), krt<A6>(A6::class), krt<A7>(A7::class), krt<A8>(A8::class), krt<A9>(A9::class), krt<A10>(A10::class), krt<A11>(A11::class), krt<A12>(A12::class)), R::class.java,
+			{ lambda(it[0] as A0, it[1] as A1, it[2] as A2, it[3] as A3, it[4] as A4, it[5] as A5, it[6] as A6, it[7] as A7, it[8] as A8, it[9] as A9, it[10] as A10, it[11] as A11, it[12] as A12) }
+		) { override fun toString(): String { return "(${A0::class}, ${A1::class}, ${A2::class}, ${A3::class}, ${A4::class}, ${A5::class}, ${A6::class}, ${A7::class}, ${A8::class}, ${A9::class}, ${A10::class}, ${A11::class}, ${A12::class}) -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, reified a2, reified a3, reified a4, reified a5, reified a6, reified a7, reified a8, reified a9, reified a10, reified a11, reified a12, reified a13, reified a14, R> lambda14ToClosure(noinline lambda: (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java, a2::class.java, a3::class.java, a4::class.java, a5::class.java, a6::class.java, a7::class.java, a8::class.java, a9::class.java, a10::class.java, a11::class.java, a12::class.java, a13::class.java, a14::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1, args[2] as a2, args[3] as a3, args[4] as a4, args[5] as a5, args[6] as a6, args[7] as a7, args[8] as a8, args[9] as a9, args[10] as a10, args[11] as a11, args[12] as a12, args[13] as a13, args[14] as a14) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified A12, reified A13, reified R> lambda14ToOverload(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class), krt<A1>(A1::class), krt<A2>(A2::class), krt<A3>(A3::class), krt<A4>(A4::class), krt<A5>(A5::class), krt<A6>(A6::class), krt<A7>(A7::class), krt<A8>(A8::class), krt<A9>(A9::class), krt<A10>(A10::class), krt<A11>(A11::class), krt<A12>(A12::class), krt<A13>(A13::class)), R::class.java,
+			{ lambda(it[0] as A0, it[1] as A1, it[2] as A2, it[3] as A3, it[4] as A4, it[5] as A5, it[6] as A6, it[7] as A7, it[8] as A8, it[9] as A9, it[10] as A10, it[11] as A11, it[12] as A12, it[13] as A13) }
+		) { override fun toString(): String { return "(${A0::class}, ${A1::class}, ${A2::class}, ${A3::class}, ${A4::class}, ${A5::class}, ${A6::class}, ${A7::class}, ${A8::class}, ${A9::class}, ${A10::class}, ${A11::class}, ${A12::class}, ${A13::class}) -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, reified a2, reified a3, reified a4, reified a5, reified a6, reified a7, reified a8, reified a9, reified a10, reified a11, reified a12, reified a13, reified a14, reified a15, R> lambda15ToClosure(noinline lambda: (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java, a2::class.java, a3::class.java, a4::class.java, a5::class.java, a6::class.java, a7::class.java, a8::class.java, a9::class.java, a10::class.java, a11::class.java, a12::class.java, a13::class.java, a14::class.java, a15::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1, args[2] as a2, args[3] as a3, args[4] as a4, args[5] as a5, args[6] as a6, args[7] as a7, args[8] as a8, args[9] as a9, args[10] as a10, args[11] as a11, args[12] as a12, args[13] as a13, args[14] as a14, args[15] as a15) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified A12, reified A13, reified A14, reified R> lambda15ToOverload(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class), krt<A1>(A1::class), krt<A2>(A2::class), krt<A3>(A3::class), krt<A4>(A4::class), krt<A5>(A5::class), krt<A6>(A6::class), krt<A7>(A7::class), krt<A8>(A8::class), krt<A9>(A9::class), krt<A10>(A10::class), krt<A11>(A11::class), krt<A12>(A12::class), krt<A13>(A13::class), krt<A14>(A14::class)), R::class.java,
+			{ lambda(it[0] as A0, it[1] as A1, it[2] as A2, it[3] as A3, it[4] as A4, it[5] as A5, it[6] as A6, it[7] as A7, it[8] as A8, it[9] as A9, it[10] as A10, it[11] as A11, it[12] as A12, it[13] as A13, it[14] as A14) }
+		) { override fun toString(): String { return "(${A0::class}, ${A1::class}, ${A2::class}, ${A3::class}, ${A4::class}, ${A5::class}, ${A6::class}, ${A7::class}, ${A8::class}, ${A9::class}, ${A10::class}, ${A11::class}, ${A12::class}, ${A13::class}, ${A14::class}) -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, reified a2, reified a3, reified a4, reified a5, reified a6, reified a7, reified a8, reified a9, reified a10, reified a11, reified a12, reified a13, reified a14, reified a15, reified a16, R> lambda16ToClosure(noinline lambda: (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java, a2::class.java, a3::class.java, a4::class.java, a5::class.java, a6::class.java, a7::class.java, a8::class.java, a9::class.java, a10::class.java, a11::class.java, a12::class.java, a13::class.java, a14::class.java, a15::class.java, a16::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1, args[2] as a2, args[3] as a3, args[4] as a4, args[5] as a5, args[6] as a6, args[7] as a7, args[8] as a8, args[9] as a9, args[10] as a10, args[11] as a11, args[12] as a12, args[13] as a13, args[14] as a14, args[15] as a15, args[16] as a16) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified A12, reified A13, reified A14, reified A15, reified R> lambda16ToOverload(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class), krt<A1>(A1::class), krt<A2>(A2::class), krt<A3>(A3::class), krt<A4>(A4::class), krt<A5>(A5::class), krt<A6>(A6::class), krt<A7>(A7::class), krt<A8>(A8::class), krt<A9>(A9::class), krt<A10>(A10::class), krt<A11>(A11::class), krt<A12>(A12::class), krt<A13>(A13::class), krt<A14>(A14::class), krt<A15>(A15::class)), R::class.java,
+			{ lambda(it[0] as A0, it[1] as A1, it[2] as A2, it[3] as A3, it[4] as A4, it[5] as A5, it[6] as A6, it[7] as A7, it[8] as A8, it[9] as A9, it[10] as A10, it[11] as A11, it[12] as A12, it[13] as A13, it[14] as A14, it[15] as A15) }
+		) { override fun toString(): String { return "(${A0::class}, ${A1::class}, ${A2::class}, ${A3::class}, ${A4::class}, ${A5::class}, ${A6::class}, ${A7::class}, ${A8::class}, ${A9::class}, ${A10::class}, ${A11::class}, ${A12::class}, ${A13::class}, ${A14::class}, ${A15::class}) -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, reified a2, reified a3, reified a4, reified a5, reified a6, reified a7, reified a8, reified a9, reified a10, reified a11, reified a12, reified a13, reified a14, reified a15, reified a16, reified a17, R> lambda17ToClosure(noinline lambda: (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java, a2::class.java, a3::class.java, a4::class.java, a5::class.java, a6::class.java, a7::class.java, a8::class.java, a9::class.java, a10::class.java, a11::class.java, a12::class.java, a13::class.java, a14::class.java, a15::class.java, a16::class.java, a17::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1, args[2] as a2, args[3] as a3, args[4] as a4, args[5] as a5, args[6] as a6, args[7] as a7, args[8] as a8, args[9] as a9, args[10] as a10, args[11] as a11, args[12] as a12, args[13] as a13, args[14] as a14, args[15] as a15, args[16] as a16, args[17] as a17) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified A12, reified A13, reified A14, reified A15, reified A16, reified R> lambda17ToOverload(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class), krt<A1>(A1::class), krt<A2>(A2::class), krt<A3>(A3::class), krt<A4>(A4::class), krt<A5>(A5::class), krt<A6>(A6::class), krt<A7>(A7::class), krt<A8>(A8::class), krt<A9>(A9::class), krt<A10>(A10::class), krt<A11>(A11::class), krt<A12>(A12::class), krt<A13>(A13::class), krt<A14>(A14::class), krt<A15>(A15::class), krt<A16>(A16::class)), R::class.java,
+			{ lambda(it[0] as A0, it[1] as A1, it[2] as A2, it[3] as A3, it[4] as A4, it[5] as A5, it[6] as A6, it[7] as A7, it[8] as A8, it[9] as A9, it[10] as A10, it[11] as A11, it[12] as A12, it[13] as A13, it[14] as A14, it[15] as A15, it[16] as A16) }
+		) { override fun toString(): String { return "(${A0::class}, ${A1::class}, ${A2::class}, ${A3::class}, ${A4::class}, ${A5::class}, ${A6::class}, ${A7::class}, ${A8::class}, ${A9::class}, ${A10::class}, ${A11::class}, ${A12::class}, ${A13::class}, ${A14::class}, ${A15::class}, ${A16::class}) -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, reified a2, reified a3, reified a4, reified a5, reified a6, reified a7, reified a8, reified a9, reified a10, reified a11, reified a12, reified a13, reified a14, reified a15, reified a16, reified a17, reified a18, R> lambda18ToClosure(noinline lambda: (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java, a2::class.java, a3::class.java, a4::class.java, a5::class.java, a6::class.java, a7::class.java, a8::class.java, a9::class.java, a10::class.java, a11::class.java, a12::class.java, a13::class.java, a14::class.java, a15::class.java, a16::class.java, a17::class.java, a18::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1, args[2] as a2, args[3] as a3, args[4] as a4, args[5] as a5, args[6] as a6, args[7] as a7, args[8] as a8, args[9] as a9, args[10] as a10, args[11] as a11, args[12] as a12, args[13] as a13, args[14] as a14, args[15] as a15, args[16] as a16, args[17] as a17, args[18] as a18) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified A12, reified A13, reified A14, reified A15, reified A16, reified A17, reified R> lambda18ToOverload(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class), krt<A1>(A1::class), krt<A2>(A2::class), krt<A3>(A3::class), krt<A4>(A4::class), krt<A5>(A5::class), krt<A6>(A6::class), krt<A7>(A7::class), krt<A8>(A8::class), krt<A9>(A9::class), krt<A10>(A10::class), krt<A11>(A11::class), krt<A12>(A12::class), krt<A13>(A13::class), krt<A14>(A14::class), krt<A15>(A15::class), krt<A16>(A16::class), krt<A17>(A17::class)), R::class.java,
+			{ lambda(it[0] as A0, it[1] as A1, it[2] as A2, it[3] as A3, it[4] as A4, it[5] as A5, it[6] as A6, it[7] as A7, it[8] as A8, it[9] as A9, it[10] as A10, it[11] as A11, it[12] as A12, it[13] as A13, it[14] as A14, it[15] as A15, it[16] as A16, it[17] as A17) }
+		) { override fun toString(): String { return "(${A0::class}, ${A1::class}, ${A2::class}, ${A3::class}, ${A4::class}, ${A5::class}, ${A6::class}, ${A7::class}, ${A8::class}, ${A9::class}, ${A10::class}, ${A11::class}, ${A12::class}, ${A13::class}, ${A14::class}, ${A15::class}, ${A16::class}, ${A17::class}) -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, reified a2, reified a3, reified a4, reified a5, reified a6, reified a7, reified a8, reified a9, reified a10, reified a11, reified a12, reified a13, reified a14, reified a15, reified a16, reified a17, reified a18, reified a19, R> lambda19ToClosure(noinline lambda: (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java, a2::class.java, a3::class.java, a4::class.java, a5::class.java, a6::class.java, a7::class.java, a8::class.java, a9::class.java, a10::class.java, a11::class.java, a12::class.java, a13::class.java, a14::class.java, a15::class.java, a16::class.java, a17::class.java, a18::class.java, a19::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1, args[2] as a2, args[3] as a3, args[4] as a4, args[5] as a5, args[6] as a6, args[7] as a7, args[8] as a8, args[9] as a9, args[10] as a10, args[11] as a11, args[12] as a12, args[13] as a13, args[14] as a14, args[15] as a15, args[16] as a16, args[17] as a17, args[18] as a18, args[19] as a19) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified A12, reified A13, reified A14, reified A15, reified A16, reified A17, reified A18, reified R> lambda19ToOverload(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class), krt<A1>(A1::class), krt<A2>(A2::class), krt<A3>(A3::class), krt<A4>(A4::class), krt<A5>(A5::class), krt<A6>(A6::class), krt<A7>(A7::class), krt<A8>(A8::class), krt<A9>(A9::class), krt<A10>(A10::class), krt<A11>(A11::class), krt<A12>(A12::class), krt<A13>(A13::class), krt<A14>(A14::class), krt<A15>(A15::class), krt<A16>(A16::class), krt<A17>(A17::class), krt<A18>(A18::class)), R::class.java,
+			{ lambda(it[0] as A0, it[1] as A1, it[2] as A2, it[3] as A3, it[4] as A4, it[5] as A5, it[6] as A6, it[7] as A7, it[8] as A8, it[9] as A9, it[10] as A10, it[11] as A11, it[12] as A12, it[13] as A13, it[14] as A14, it[15] as A15, it[16] as A16, it[17] as A17, it[18] as A18) }
+		) { override fun toString(): String { return "(${A0::class}, ${A1::class}, ${A2::class}, ${A3::class}, ${A4::class}, ${A5::class}, ${A6::class}, ${A7::class}, ${A8::class}, ${A9::class}, ${A10::class}, ${A11::class}, ${A12::class}, ${A13::class}, ${A14::class}, ${A15::class}, ${A16::class}, ${A17::class}, ${A18::class}) -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, reified a2, reified a3, reified a4, reified a5, reified a6, reified a7, reified a8, reified a9, reified a10, reified a11, reified a12, reified a13, reified a14, reified a15, reified a16, reified a17, reified a18, reified a19, reified a20, R> lambda20ToClosure(noinline lambda: (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java, a2::class.java, a3::class.java, a4::class.java, a5::class.java, a6::class.java, a7::class.java, a8::class.java, a9::class.java, a10::class.java, a11::class.java, a12::class.java, a13::class.java, a14::class.java, a15::class.java, a16::class.java, a17::class.java, a18::class.java, a19::class.java, a20::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1, args[2] as a2, args[3] as a3, args[4] as a4, args[5] as a5, args[6] as a6, args[7] as a7, args[8] as a8, args[9] as a9, args[10] as a10, args[11] as a11, args[12] as a12, args[13] as a13, args[14] as a14, args[15] as a15, args[16] as a16, args[17] as a17, args[18] as a18, args[19] as a19, args[20] as a20) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified A12, reified A13, reified A14, reified A15, reified A16, reified A17, reified A18, reified A19, reified R> lambda20ToOverload(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class), krt<A1>(A1::class), krt<A2>(A2::class), krt<A3>(A3::class), krt<A4>(A4::class), krt<A5>(A5::class), krt<A6>(A6::class), krt<A7>(A7::class), krt<A8>(A8::class), krt<A9>(A9::class), krt<A10>(A10::class), krt<A11>(A11::class), krt<A12>(A12::class), krt<A13>(A13::class), krt<A14>(A14::class), krt<A15>(A15::class), krt<A16>(A16::class), krt<A17>(A17::class), krt<A18>(A18::class), krt<A19>(A19::class)), R::class.java,
+			{ lambda(it[0] as A0, it[1] as A1, it[2] as A2, it[3] as A3, it[4] as A4, it[5] as A5, it[6] as A6, it[7] as A7, it[8] as A8, it[9] as A9, it[10] as A10, it[11] as A11, it[12] as A12, it[13] as A13, it[14] as A14, it[15] as A15, it[16] as A16, it[17] as A17, it[18] as A18, it[19] as A19) }
+		) { override fun toString(): String { return "(${A0::class}, ${A1::class}, ${A2::class}, ${A3::class}, ${A4::class}, ${A5::class}, ${A6::class}, ${A7::class}, ${A8::class}, ${A9::class}, ${A10::class}, ${A11::class}, ${A12::class}, ${A13::class}, ${A14::class}, ${A15::class}, ${A16::class}, ${A17::class}, ${A18::class}, ${A19::class}) -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, reified a2, reified a3, reified a4, reified a5, reified a6, reified a7, reified a8, reified a9, reified a10, reified a11, reified a12, reified a13, reified a14, reified a15, reified a16, reified a17, reified a18, reified a19, reified a20, reified a21, R> lambda21ToClosure(noinline lambda: (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java, a2::class.java, a3::class.java, a4::class.java, a5::class.java, a6::class.java, a7::class.java, a8::class.java, a9::class.java, a10::class.java, a11::class.java, a12::class.java, a13::class.java, a14::class.java, a15::class.java, a16::class.java, a17::class.java, a18::class.java, a19::class.java, a20::class.java, a21::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1, args[2] as a2, args[3] as a3, args[4] as a4, args[5] as a5, args[6] as a6, args[7] as a7, args[8] as a8, args[9] as a9, args[10] as a10, args[11] as a11, args[12] as a12, args[13] as a13, args[14] as a14, args[15] as a15, args[16] as a16, args[17] as a17, args[18] as a18, args[19] as a19, args[20] as a20, args[21] as a21) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified A12, reified A13, reified A14, reified A15, reified A16, reified A17, reified A18, reified A19, reified A20, reified R> lambda21ToOverload(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class), krt<A1>(A1::class), krt<A2>(A2::class), krt<A3>(A3::class), krt<A4>(A4::class), krt<A5>(A5::class), krt<A6>(A6::class), krt<A7>(A7::class), krt<A8>(A8::class), krt<A9>(A9::class), krt<A10>(A10::class), krt<A11>(A11::class), krt<A12>(A12::class), krt<A13>(A13::class), krt<A14>(A14::class), krt<A15>(A15::class), krt<A16>(A16::class), krt<A17>(A17::class), krt<A18>(A18::class), krt<A19>(A19::class), krt<A20>(A20::class)), R::class.java,
+			{ lambda(it[0] as A0, it[1] as A1, it[2] as A2, it[3] as A3, it[4] as A4, it[5] as A5, it[6] as A6, it[7] as A7, it[8] as A8, it[9] as A9, it[10] as A10, it[11] as A11, it[12] as A12, it[13] as A13, it[14] as A14, it[15] as A15, it[16] as A16, it[17] as A17, it[18] as A18, it[19] as A19, it[20] as A20) }
+		) { override fun toString(): String { return "(${A0::class}, ${A1::class}, ${A2::class}, ${A3::class}, ${A4::class}, ${A5::class}, ${A6::class}, ${A7::class}, ${A8::class}, ${A9::class}, ${A10::class}, ${A11::class}, ${A12::class}, ${A13::class}, ${A14::class}, ${A15::class}, ${A16::class}, ${A17::class}, ${A18::class}, ${A19::class}, ${A20::class}) -> ${R::class}" } }
 	}
 	@ExportGradle @JvmStatic
-	inline fun <reified a1, reified a2, reified a3, reified a4, reified a5, reified a6, reified a7, reified a8, reified a9, reified a10, reified a11, reified a12, reified a13, reified a14, reified a15, reified a16, reified a17, reified a18, reified a19, reified a20, reified a21, reified a22, R> lambda22ToClosure(noinline lambda: (a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22) -> R, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += object: KotlinClosure.Overload(arrayOf(a1::class.java, a2::class.java, a3::class.java, a4::class.java, a5::class.java, a6::class.java, a7::class.java, a8::class.java, a9::class.java, a10::class.java, a11::class.java, a12::class.java, a13::class.java, a14::class.java, a15::class.java, a16::class.java, a17::class.java, a18::class.java, a19::class.java, a20::class.java, a21::class.java, a22::class.java),
-			{ val args = it[0] as? Array<*> ?: arrayOf<Any?>(); lambda(args[1] as a1, args[2] as a2, args[3] as a3, args[4] as a4, args[5] as a5, args[6] as a6, args[7] as a7, args[8] as a8, args[9] as a9, args[10] as a10, args[11] as a11, args[12] as a12, args[13] as a13, args[14] as a14, args[15] as a15, args[16] as a16, args[17] as a17, args[18] as a18, args[19] as a19, args[20] as a20, args[21] as a21, args[22] as a22) }) {
-			override fun toString(): String { return lambda.toString() }
-		}
-		return result
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified A12, reified A13, reified A14, reified A15, reified A16, reified A17, reified A18, reified A19, reified A20, reified A21, reified R> lambda22ToOverload(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21) -> R): KotlinClosure.Overload {
+		return object: KotlinClosure.Overload(
+			arrayOf(krt<A0>(A0::class), krt<A1>(A1::class), krt<A2>(A2::class), krt<A3>(A3::class), krt<A4>(A4::class), krt<A5>(A5::class), krt<A6>(A6::class), krt<A7>(A7::class), krt<A8>(A8::class), krt<A9>(A9::class), krt<A10>(A10::class), krt<A11>(A11::class), krt<A12>(A12::class), krt<A13>(A13::class), krt<A14>(A14::class), krt<A15>(A15::class), krt<A16>(A16::class), krt<A17>(A17::class), krt<A18>(A18::class), krt<A19>(A19::class), krt<A20>(A20::class), krt<A21>(A21::class)), R::class.java,
+			{ lambda(it[0] as A0, it[1] as A1, it[2] as A2, it[3] as A3, it[4] as A4, it[5] as A5, it[6] as A6, it[7] as A7, it[8] as A8, it[9] as A9, it[10] as A10, it[11] as A11, it[12] as A12, it[13] as A13, it[14] as A14, it[15] as A15, it[16] as A16, it[17] as A17, it[18] as A18, it[19] as A19, it[20] as A20, it[21] as A21) }
+		) { override fun toString(): String { return "(${A0::class}, ${A1::class}, ${A2::class}, ${A3::class}, ${A4::class}, ${A5::class}, ${A6::class}, ${A7::class}, ${A8::class}, ${A9::class}, ${A10::class}, ${A11::class}, ${A12::class}, ${A13::class}, ${A14::class}, ${A15::class}, ${A16::class}, ${A17::class}, ${A18::class}, ${A19::class}, ${A20::class}, ${A21::class}) -> ${R::class}" } }
+	}
+
+	/*
+	console.log(new Array(23).fill().map((v, i) => `@ExportGradle @JvmStatic
+	inline fun <${new Array(i).fill().map((_v, _i) => `reified A${_i}`).join(", ")}${i == 0 ? "" : ", "}reified R> lambda${i}ToClosure(noinline lambda: (${new Array(i).fill().map((_v, _i) => `A${_i}`).join(", ")}) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda${i}ToOverload(lambda) }
+	}`).join("\n"))
+	 */
+	@ExportGradle @JvmStatic
+	inline fun <reified R> lambda0ToClosure(noinline lambda: () -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda0ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified R> lambda1ToClosure(noinline lambda: (A0) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda1ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified A1, reified R> lambda2ToClosure(noinline lambda: (A0, A1) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda2ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified A1, reified A2, reified R> lambda3ToClosure(noinline lambda: (A0, A1, A2) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda3ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified R> lambda4ToClosure(noinline lambda: (A0, A1, A2, A3) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda4ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified R> lambda5ToClosure(noinline lambda: (A0, A1, A2, A3, A4) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda5ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified R> lambda6ToClosure(noinline lambda: (A0, A1, A2, A3, A4, A5) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda6ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified R> lambda7ToClosure(noinline lambda: (A0, A1, A2, A3, A4, A5, A6) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda7ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified R> lambda8ToClosure(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda8ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified R> lambda9ToClosure(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda9ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified R> lambda10ToClosure(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda10ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified R> lambda11ToClosure(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda11ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified R> lambda12ToClosure(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda12ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified A12, reified R> lambda13ToClosure(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda13ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified A12, reified A13, reified R> lambda14ToClosure(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda14ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified A12, reified A13, reified A14, reified R> lambda15ToClosure(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda15ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified A12, reified A13, reified A14, reified A15, reified R> lambda16ToClosure(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda16ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified A12, reified A13, reified A14, reified A15, reified A16, reified R> lambda17ToClosure(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda17ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified A12, reified A13, reified A14, reified A15, reified A16, reified A17, reified R> lambda18ToClosure(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda18ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified A12, reified A13, reified A14, reified A15, reified A16, reified A17, reified A18, reified R> lambda19ToClosure(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda19ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified A12, reified A13, reified A14, reified A15, reified A16, reified A17, reified A18, reified A19, reified R> lambda20ToClosure(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda20ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified A12, reified A13, reified A14, reified A15, reified A16, reified A17, reified A18, reified A19, reified A20, reified R> lambda21ToClosure(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda21ToOverload(lambda) }
+	}
+	@ExportGradle @JvmStatic
+	inline fun <reified A0, reified A1, reified A2, reified A3, reified A4, reified A5, reified A6, reified A7, reified A8, reified A9, reified A10, reified A11, reified A12, reified A13, reified A14, reified A15, reified A16, reified A17, reified A18, reified A19, reified A20, reified A21, reified R> lambda22ToClosure(noinline lambda: (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15, A16, A17, A18, A19, A20, A21) -> R, name: String = lambda.toString()): Closure<*> {
+		return KotlinClosure(name).apply { overloads += lambda22ToOverload(lambda) }
 	}
 	@ExportGradle @JvmStatic
 	fun lambdaNToClosure(lambda: (Array<out Any?>) -> Any?, name: String = lambda.toString()): Closure<*> {
-		val result = KotlinClosure(name)
-		result.overloads += KotlinClosure.KLambdaOverload(lambda)
-		return result
+		return KotlinClosure(name).apply { overloads += KotlinClosure.KLambdaOverload(lambda) }
 	}
 
 	@ExportGradle @JvmStatic
-	fun closureToLambda(closure: Closure<*>, target: Class<Function<*>>): Function<*> {
+	fun <R> closureToLambda(closure: Closure<R>, target: Class<Function<*>>): Function<R> {
 		run {
 			/*
 			console.log(new Array(23).fill(null).map((v, i) => `if(Function${i}::class.java.isAssignableFrom(target)) return closureToLambda${i}<${new Array(i).fill(null).map((_v, _i) => `Any?`).join(", ")}, R>(closure)`).join("\n"))
@@ -428,15 +482,15 @@ object GroovyManipulation {
 
 	open class DummyGroovyObject: GroovyObjectSupport() {
 		@ExportGradle
-		fun __start__() {
+		open fun __start__() {
 			metaClass = MetaClassImpl(DummyGroovyObject::class.java)
 		}
 		@ExportGradle
-		fun __end__() {
+		open fun __end__() {
 			METHOD_MetaClassImpl_reinitialize.invoke(metaClass)
 		}
 		@ExportGradle
-		fun __clear__() {
+		open fun __clear__() {
 			metaClass = null
 		}
 	}
@@ -504,6 +558,9 @@ object GroovyManipulation {
 		val returnType0: Class<*>,
 		var callback: ((Any?, Array<out Any?>) -> Any?)?
 	): MetaMethod() {
+		init {
+			setParametersTypes(parameterTypes0)
+		}
 		override fun getModifiers(): Int {
 			return modifiers0
 		}
@@ -664,6 +721,7 @@ object GroovyManipulation {
 
 		return null
 	}
+	@Deprecated("Implement your own logic")
 	@JvmStatic
 	fun setKotlinToGroovy(that: Any?, project: Project?, names: Array<String>, value: Any?) {
 		val metaClass = if(that != null) metaClassFor(that) as? MetaClassImpl else null

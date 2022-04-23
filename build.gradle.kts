@@ -80,7 +80,11 @@ tasks.check {
 }
 
 tasks.withType<Test> {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        if(System.getProperty("DEBUG", "false") == "true") {
+            jvmArgs("-Xdebug", "-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005")
+        }
+    }
     testLogging {
         events("PASSED", "SKIPPED", "FAILED")
     }
