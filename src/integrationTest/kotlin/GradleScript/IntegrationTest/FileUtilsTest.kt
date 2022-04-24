@@ -11,7 +11,10 @@ class FileUtilsTest: BaseIntegrationTest() {
 	@Test
 	fun `can make, write, read, and delete file`() {
 		withFile(testDir) {
+			"test" * {
+				mkfile()
 
+			}
 		}
 	}
 }
