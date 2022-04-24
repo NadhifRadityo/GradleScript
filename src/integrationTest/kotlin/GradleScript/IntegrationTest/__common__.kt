@@ -1,7 +1,8 @@
 package GradleScript.IntegrationTest
 
 import GradleScript.TestFixtures.BaseContextTest
+import GradleScript.TestFixtures.FileDSLContext
 
-open class BaseIntegrationTest: BaseContextTest {
+abstract class BaseIntegrationTest: BaseContextTest, FileDSLContext {
 
 }

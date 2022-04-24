@@ -1,35 +1,12 @@
-package GradleScript.TestFixtures
+package GradleScript.TestFixtures.ProjectDSL
 
-import GradleScript.Strategies.FileUtils.file
-import GradleScript.Strategies.FileUtils.fileRelative
-import GradleScript.Strategies.FileUtils.mkfile
-import GradleScript.Strategies.LoggerUtils.loggerAppend
-import GradleScript.Strategies.StringUtils.escape
+import GradleScript.Strategies.FileUtils
+import GradleScript.Strategies.LoggerUtils
+import GradleScript.Strategies.StringUtils
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import java.io.File
 import java.io.Writer
-
-fun newOutputWriter(name: String): Writer {
-	val logId = "Project ${name}"
-	return object: Writer() {
-		override fun close() { }
-		override fun flush() { }
-		override fun write(cbuf: CharArray, off: Int, len: Int) {
-			loggerAppend(logId, cbuf.joinToString(""), off, len)
-		}
-	}
-}
-fun newErrorWriter(name: String): Writer {
-	val logId = "Project ${name}"
-	return object: Writer() {
-		override fun close() { }
-		override fun flush() { }
-		override fun write(cbuf: CharArray, off: Int, len: Int) {
-			loggerAppend(logId, cbuf.joinToString(""), off, len)
-		}
-	}
-}
 
 fun GradleRunner.appendArgs(vararg args: String) {
 	val argsList = arguments.toMutableList()
@@ -42,16 +19,28 @@ fun GradleRunner.appendArgs(args: List<String>) {
 	withArguments(argsList)
 }
 fun GradleRunner.includeBuild(rootProject: RootProject) {
-	appendArgs("--include-build=${escape(fileRelative(projectDir, rootProject.directory))}")
+	appendArgs("--include-build=${StringUtils.escape(FileUtils.fileRelative(projectDir, rootProject.directory))}")
 }
 
-typealias ProjectFileDSLExpression<RESULT> = FileDSLExpression<ProjectFileDSL, RESULT>
-typealias ProjectFileDSLGenerator = FileDSLGenerator<ProjectFileDSL>
-fun ProjectFileDSLGenerator(): ProjectFileDSLGenerator { lateinit var generator: ProjectFileDSLGenerator;
-	generator = { file, dsl -> ProjectFileDSL(dsl._instance.project, file, generator) }; return generator }
-open class ProjectFileDSL(internal val _project: Project?, root: File, generator: ProjectFileDSLGenerator = ProjectFileDSLGenerator()): FileDSL<ProjectFileDSL>(generator, root) {
-	val project: Project
-		get() = _project ?: _instance as Project
+fun newOutputWriter(name: String): Writer {
+	val logId = "Project ${name}"
+	return object: Writer() {
+		override fun close() { }
+		override fun flush() { }
+		override fun write(cbuf: CharArray, off: Int, len: Int) {
+			LoggerUtils.loggerAppend(logId, cbuf.joinToString(""), off, len)
+		}
+	}
+}
+fun newErrorWriter(name: String): Writer {
+	val logId = "Project ${name}"
+	return object: Writer() {
+		override fun close() { }
+		override fun flush() { }
+		override fun write(cbuf: CharArray, off: Int, len: Int) {
+			LoggerUtils.loggerAppend(logId, cbuf.joinToString(""), off, len)
+		}
+	}
 }
 
 enum class DSL(val extension: String) {
@@ -62,14 +51,10 @@ open class Project(
 	val parent: Project?,
 	val directory: File,
 	val name: String
-): ProjectFileDSL(null, directory) {
+) {
 	open var buildFileDSL: DSL = DSL.GROOVY
 	open val buildFile: File
-		get() = file(directory, "build.${buildFileDSL.extension}")
-
-	open fun <RESULT> withBuildSource(expression: ProjectFileDSLExpression<RESULT>): RESULT {
-		return mkfile(buildFile).files(expression)
-	}
+		get() = FileUtils.file(directory, "build.${buildFileDSL.extension}")
 
 	open val configureCallbacks = mutableListOf<GradleRunner.(GradleRunner) -> Unit>()
 	open fun configure(configureCallbacks: GradleRunner.(GradleRunner) -> Unit) {
@@ -89,17 +74,10 @@ open class RootProject(
 	val children: MutableList<Project> = mutableListOf()
 	open var settingsFileDSL: DSL = DSL.GROOVY
 	open val settingsFile: File
-		get() = file(directory, "settings.${settingsFileDSL.extension}")
+		get() = FileUtils.file(directory, "settings.${settingsFileDSL.extension}")
 	override var buildFileDSL: DSL = DSL.GROOVY
 	override val buildFile: File
-		get() = file(directory, "build.${buildFileDSL.extension}")
-
-	open fun <RESULT> withSettingsSource(expression: ProjectFileDSLExpression<RESULT>): RESULT {
-		return mkfile(settingsFile).files(expression)
-	}
-	override fun <RESULT> withBuildSource(expression: ProjectFileDSLExpression<RESULT>): RESULT {
-		return mkfile(buildFile).files(expression)
-	}
+		get() = FileUtils.file(directory, "build.${buildFileDSL.extension}")
 
 	override val configureCallbacks = mutableListOf<GradleRunner.(GradleRunner) -> Unit>()
 	override fun configure(configureCallbacks: GradleRunner.(GradleRunner) -> Unit) {
@@ -124,6 +102,6 @@ open class RootProject(
 		runner.appendArgs("--stacktrace")
 		config(runner)
 		return if(expectSucceed) runner.build()
-			else runner.buildAndFail()
+		else runner.buildAndFail()
 	}
 }

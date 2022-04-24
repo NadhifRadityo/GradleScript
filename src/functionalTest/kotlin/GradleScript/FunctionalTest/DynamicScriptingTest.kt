@@ -2,11 +2,10 @@ package GradleScript.FunctionalTest
 
 import GradleScript.Strategies.StringUtils.countOccurrences
 import GradleScript.Strategies.StringUtils.randomString
-import GradleScript.TestFixtures.AbstractGradleTest
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
-class DynamicScriptingTest: AbstractGradleTest() {
+class DynamicScriptingTest: BaseFunctionalGradleTest() {
 
 	@Test
 	fun `import script ()`() {
@@ -27,7 +26,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 				"""
 			}
 		}
-		val result = run(project)
+		val result = project.run()
 		assertTrue(result.output.contains(randomVariable))
 	}
 
@@ -52,7 +51,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 				"""
 			}
 		}
-		val result = run(project, false)
+		val result = project.run(false)
 		assertTrue(!result.output.contains(randomVariable))
 		// groovy.lang.MissingPropertyException: Could not get unknown property 'testVariable'
 		assertTrue(result.output.contains("Could not get unknown property 'testVariable'"))
@@ -79,7 +78,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 				"""
 			}
 		}
-		val result = run(project)
+		val result = project.run()
 		assertTrue(result.output.contains(randomVariable))
 	}
 
@@ -104,7 +103,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 				"""
 			}
 		}
-		val result = run(project, false)
+		val result = project.run(false)
 		assertTrue(!result.output.contains(randomVariable))
 		// groovy.lang.MissingPropertyException: Could not get unknown property 'testVariable'
 		assertTrue(result.output.contains("Could not get unknown property 'testVariable'"))
@@ -131,7 +130,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 				"""
 			}
 		}
-		val result = run(project)
+		val result = project.run()
 		assertTrue(result.output.contains(randomVariable))
 	}
 
@@ -156,7 +155,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 				"""
 			}
 		}
-		val result = run(project, false)
+		val result = project.run(false)
 		// java.lang.IllegalArgumentException: There's no such export 'NON_EXISTENT_EXPORT'
 		assertTrue(result.output.contains("There's no such export 'NON_EXISTENT_EXPORT'"))
 		assertFalse(result.output.contains(randomVariable))
@@ -187,7 +186,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 				"""
 			}
 		}
-		val result = run(project, false)
+		val result = project.run(false)
 		assertTrue(result.output.contains(randomVariable))
 		assertFalse(result.output.contains(randomVariable2))
 		// groovy.lang.MissingPropertyException: Could not get unknown property 'testVariable2'
@@ -215,7 +214,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 				"""
 			}
 		}
-		val result = run(project)
+		val result = project.run()
 		assertTrue(result.output.contains(randomVariable))
 	}
 
@@ -244,7 +243,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 				"""
 			}
 		}
-		val result = run(project, false)
+		val result = project.run(false)
 		assertTrue(result.output.contains(randomVariable))
 		assertFalse(result.output.contains(randomVariable2))
 		// groovy.lang.MissingPropertyException: No such property: testVariable2
@@ -272,7 +271,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 				"""
 			}
 		}
-		val result = run(project)
+		val result = project.run()
 		assertTrue(result.output.contains(randomVariable))
 	}
 
@@ -301,7 +300,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 				"""
 			}
 		}
-		val result = run(project)
+		val result = project.run()
 		assertTrue(result.output.contains(randomVariable))
 		assertTrue(result.output.contains(randomVariable2))
 	}
@@ -329,7 +328,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 				"""
 			}
 		}
-		val result = run(project)
+		val result = project.run()
 		assertTrue(result.output.contains(randomVariable))
 	}
 
@@ -358,7 +357,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 				"""
 			}
 		}
-		val result = run(project, false)
+		val result = project.run(false)
 		assertTrue(result.output.contains(randomVariable))
 		assertFalse(result.output.contains(randomVariable2))
 		// groovy.lang.MissingPropertyException: Could not get unknown property 'testVariable2'
@@ -390,7 +389,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 				"""
 			}
 		}
-		val result = run(project)
+		val result = project.run()
 		assertTrue(result.output.contains(randomVariable))
 		assertTrue(result.output.contains(randomVariable2))
 	}
@@ -424,7 +423,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 				"""
 			}
 		}
-		val result = run(project, false)
+		val result = project.run(false)
 		assertTrue(result.output.contains(randomVariable))
 		assertTrue(result.output.contains(randomVariable2))
 		assertFalse(result.output.contains(randomVariable3))
@@ -456,7 +455,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 				"""
 			}
 		}
-		val result = run(project)
+		val result = project.run()
 		assertEquals(countOccurrences(result.output, randomVariable), 1)
 	}
 
@@ -484,7 +483,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 				"""
 			}
 		}
-		val result = run(project)
+		val result = project.run()
 		assertEquals(countOccurrences(result.output, randomVariable), 1)
 	}
 
@@ -516,7 +515,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 				"""
 			}
 		}
-		val result = run(project)
+		val result = project.run()
 		assertEquals(countOccurrences(result.output, randomVariable), 1)
 		assertEquals(countOccurrences(result.output, randomVariable2), 1)
 	}
@@ -545,7 +544,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 				"""
 			}
 		}
-		val result = run(project)
+		val result = project.run()
 		assertEquals(countOccurrences(result.output, randomVariable), 2)
 	}
 
@@ -573,7 +572,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 				"""
 			}
 		}
-		val result = run(project)
+		val result = project.run()
 		assertEquals(countOccurrences(result.output, randomVariable), 2)
 	}
 
@@ -605,7 +604,7 @@ class DynamicScriptingTest: AbstractGradleTest() {
 				"""
 			}
 		}
-		val result = run(project)
+		val result = project.run()
 		assertEquals(countOccurrences(result.output, randomVariable), 2)
 		assertEquals(countOccurrences(result.output, randomVariable2), 2)
 	}

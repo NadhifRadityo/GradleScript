@@ -1,11 +1,12 @@
 package GradleScript.IntegrationTest.GroovyKotlinInteroperability
 
 import GradleScript.IntegrationTest.BaseIntegrationTest
+import GradleScript.TestFixtures.KotlinClosureDSLContext
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-class KotlinClosureTest: BaseIntegrationTest() {
+class KotlinClosureTest: BaseIntegrationTest(), KotlinClosureDSLContext {
 
 	@Test
 	fun `can call primitive overload with arg`() {
