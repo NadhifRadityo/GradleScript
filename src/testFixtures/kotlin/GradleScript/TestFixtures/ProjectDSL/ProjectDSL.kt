@@ -33,7 +33,8 @@ open class ProjectDSLImpl<RECEIVER: ProjectDSL<RECEIVER, FILE_RECEIVER>, FILE_RE
 	override val __project_dsl_generator: ProjectDSLGenerator<RECEIVER, FILE_RECEIVER>,
 	override val __project_dsl_project: Project,
 	__file_dsl_generator: ProjectFileDSLGenerator<FILE_RECEIVER>
-): ProjectDSL<RECEIVER, FILE_RECEIVER>, ProjectFileDSL<FILE_RECEIVER> by ProjectFileDSLImpl(__file_dsl_generator, __project_dsl_project.directory) {
+): ProjectDSL<RECEIVER, FILE_RECEIVER>, ProjectFileDSL<FILE_RECEIVER> by
+	ProjectFileDSLImpl(__file_dsl_generator, __project_dsl_project.directory) {
 	override val __project_dsl_instance: RECEIVER
 		get() = this as RECEIVER
 

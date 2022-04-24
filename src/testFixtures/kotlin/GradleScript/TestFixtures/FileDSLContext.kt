@@ -8,7 +8,7 @@ interface FileDSLContext {
 	fun <T> withFile(file: File, expression: DefaultFileNodeGenericDSLExpression<T>): T {
 		return DefaultFileNodeGenericDSL(file).expression()
 	}
-	fun <T> File.dsl(expression: DefaultFileNodeGenericDSLExpression<T>): T {
+	fun <T> File.files(expression: DefaultFileNodeGenericDSLExpression<T>): T {
 		return withFile(this, expression)
 	}
 }

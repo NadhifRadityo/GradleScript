@@ -60,9 +60,7 @@ interface KotlinClosureDSL<RECEIVER: KotlinClosureDSL<RECEIVER>> {
 	fun <T, V> withKProperty1Overloads(owner: T, property: KProperty1<T, V>): Array<Overload>
 	fun <D, E, V> withKProperty2Overloads(owner1: D, owner2: E, property: KProperty2<D, E, V>): Array<Overload>
 
-	fun <RESULT> withImpl(expression: KotlinClosureDSLImpl<RECEIVER>.() -> RESULT): RESULT {
-		return (__kotlin_closure_dsl_instance as KotlinClosureDSLImpl<RECEIVER>).expression()
-	}
+	fun <RESULT> withImpl(expression: KotlinClosureDSLImpl<RECEIVER>.() -> RESULT): RESULT
 }
 // console.log(new Array(23).fill().map((v, i) => `inline fun <${new Array(i).fill().map((_v, _i) => `reified A${_i}`).join(", ")}${i == 0 ? "" : ", "}reified R> KotlinClosureDSL<*>.withLambda${i}ToOverload(noinline lambda: (${new Array(i).fill().map((_v, _i) => `A${_i}`).join(", ")}) -> R): Overload = +lambda${i}ToOverload(lambda)`).join("\n"))
 inline fun <reified R> KotlinClosureDSL<*>.withLambda0ToOverload(noinline lambda: () -> R): Overload = +lambda0ToOverload(lambda)
@@ -131,6 +129,10 @@ open class KotlinClosureDSLImpl<RECEIVER: KotlinClosureDSL<RECEIVER>>(
 	}
 	override fun <D, E, V> withKProperty2Overloads(owner1: D, owner2: E, property: KProperty2<D, E, V>): Array<Overload> {
 		return +getKProperty2Overloads(owner1, owner2, property)
+	}
+
+	override fun <RESULT> withImpl(expression: KotlinClosureDSLImpl<RECEIVER>.() -> RESULT): RESULT {
+		return this.expression()
 	}
 
 	/*

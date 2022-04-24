@@ -11,10 +11,13 @@ interface MockKotlinClosureDSL<RECEIVER: MockKotlinClosureDSL<RECEIVER>>: Kotlin
 	fun expectError(message: String? = null)
 	fun expectNotError()
 
-	fun <RESULT> withMockImpl(expression: MockKotlinClosureDSLImpl<RECEIVER>.() -> RESULT): RESULT {
-		return (__kotlin_closure_dsl_instance as MockKotlinClosureDSLImpl<RECEIVER>).expression()
-	}
+	fun <RESULT> withMockImpl(expression: MockKotlinClosureDSLImpl<RECEIVER>.() -> RESULT): RESULT
 }
+//console.log(new Array(23).fill().map((v, i) => `inline fun <${new Array(i).fill().map((_v, _i) => `reified A${_i}`).join(", ")}${i == 0 ? "" : ", "}reified R> MockKotlinClosureDSL<*>.withMockLambda${i}ToOverload(ret: R? = null): CallbackData<(${new Array(i).fill().map((_v, _i) => `A${_i}`).join(", ")}) -> R?> {
+//	val callbackData = mockLambda${i}ToOverload<${new Array(i).fill().map((_v, _i) => `A${_i}`).join(", ")}${i == 0 ? "" : ", "}R>(ret)
+//	+callbackData.overload
+//	return callbackData
+//}`).join("\n"))
 inline fun <reified R> MockKotlinClosureDSL<*>.withMockLambda0ToOverload(ret: R? = null): CallbackData<() -> R?> {
 	val callbackData = mockLambda0ToOverload<R>(ret)
 	+callbackData.overload
@@ -135,6 +138,9 @@ open class MockKotlinClosureDSLImpl<RECEIVER: MockKotlinClosureDSL<RECEIVER>>(
 	__kotlin_closure_dsl_closure: KotlinClosure
 ): MockKotlinClosureDSL<RECEIVER>, KotlinClosureDSL<MockKotlinClosureDSL<RECEIVER>> by
 	KotlinClosureDSLImpl(__kotlin_closure_dsl_generator, __kotlin_closure_dsl_closure) {
+	override val __kotlin_closure_dsl_instance: RECEIVER
+		get() = this as RECEIVER
+
 	internal var _exception: Throwable? = null
 	internal var _checked: Boolean = true
 	override val exception: Throwable?
@@ -146,8 +152,9 @@ open class MockKotlinClosureDSLImpl<RECEIVER: MockKotlinClosureDSL<RECEIVER>>(
 		if(!_checked)
 			throw IllegalStateException("Last call is not being checked")
 		return try {
-			__kotlin_closure_dsl_closure.call(*arguments)
+			val result = __kotlin_closure_dsl_closure.call(*arguments)
 			this._checked = false
+			result
 		} catch(e: Throwable) {
 			_exception = e
 			null
@@ -170,6 +177,10 @@ open class MockKotlinClosureDSLImpl<RECEIVER: MockKotlinClosureDSL<RECEIVER>>(
 		_checked = true
 		if(exception == null) return
 		throw AssertionError("KotlinClosure expecting to not error\nError: ${exception.message}", exception)
+	}
+
+	override fun <RESULT> withMockImpl(expression: MockKotlinClosureDSLImpl<RECEIVER>.() -> RESULT): RESULT {
+		return this.expression()
 	}
 
 	/*

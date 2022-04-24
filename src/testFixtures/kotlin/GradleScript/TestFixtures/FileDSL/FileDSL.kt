@@ -10,6 +10,7 @@ annotation class FileDSLMarker
 typealias FileDSLExpression<RECEIVER, RESULT> = RECEIVER.() -> RESULT
 typealias FileDSLGenerator<RECEIVER> = (FileDSL<RECEIVER>, File) -> RECEIVER
 @FileDSLMarker
+@Deprecated("Use FileNodeDirectoryDSL/FileNodeFileDSL/FileNodeGenericDSL")
 interface FileDSL<RECEIVER: FileDSL<RECEIVER>> {
 	val __file_dsl_generator: FileDSLGenerator<RECEIVER>
 	val __file_dsl_file: File

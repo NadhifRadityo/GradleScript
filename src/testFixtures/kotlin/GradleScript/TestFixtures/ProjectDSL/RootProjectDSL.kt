@@ -21,6 +21,8 @@ open class RootProjectDSLImpl<RECEIVER: RootProjectDSL<RECEIVER, FILE_RECEIVER>,
 	__project_dsl_project: RootProject,
 	__file_dsl_generator: FileDSLGenerator<ProjectFileDSL<FILE_RECEIVER>>
 ): RootProjectDSL<RECEIVER, FILE_RECEIVER>, ProjectDSL<RootProjectDSL<RECEIVER, FILE_RECEIVER>, FILE_RECEIVER> by ProjectDSLImpl(__project_dsl_generator, __project_dsl_project, __file_dsl_generator) {
+	override val __project_dsl_instance: RECEIVER
+		get() = this as RECEIVER
 	override val __project_dsl_root_project: RootProject
 		get() = __project_dsl_project as RootProject
 
