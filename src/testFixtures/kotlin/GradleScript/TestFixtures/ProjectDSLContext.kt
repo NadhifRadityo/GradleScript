@@ -3,8 +3,6 @@ package GradleScript.TestFixtures
 import GradleScript.Strategies.FileUtils.file
 import GradleScript.Strategies.StringUtils.randomString
 import GradleScript.TestFixtures.ProjectDSL.*
-import GradleScript.TestFixtures.RootProjectDSL.DefaultRootProjectDSL
-import GradleScript.TestFixtures.RootProjectDSL.DefaultRootProjectDSLExpression
 import java.io.File
 
 interface ProjectDSLContext: BaseContextTest {
@@ -47,13 +45,15 @@ interface ProjectDSLContext: BaseContextTest {
 	fun <RECEIVER: RootProjectDSL<RECEIVER, FILE_RECEIVER>, FILE_RECEIVER: ProjectFileDSL<FILE_RECEIVER>>
 			RootProjectDSL<RECEIVER, FILE_RECEIVER>.withDefaultSettingsSource() {
 		withSettingsSource {
-			-ROOTPROJECT_SETTINGS(name, directory, builds.isEmpty(), children)
+			-ROOTPROJECT_SETTINGS(
+				this@withDefaultSettingsSource.name, this@withDefaultSettingsSource.directory,
+				this@withDefaultSettingsSource.builds.isEmpty(), this@withDefaultSettingsSource.children)
 		}
 	}
 	fun <RECEIVER: ProjectDSL<RECEIVER, FILE_RECEIVER>, FILE_RECEIVER: ProjectFileDSL<FILE_RECEIVER>>
 			ProjectDSL<RECEIVER, FILE_RECEIVER>.withDefaultBuildSource() {
 		withBuildSource {
-			-ROOTPROJECT_BUILD(name)
+			-ROOTPROJECT_BUILD(this@withDefaultBuildSource.name)
 		}
 	}
 	fun <T, RECEIVER: ProjectDSL<RECEIVER, FILE_RECEIVER>, FILE_RECEIVER: ProjectFileDSL<FILE_RECEIVER>>

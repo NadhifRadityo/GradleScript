@@ -3,8 +3,12 @@ package GradleScript.TestFixtures.ProjectDSL
 import org.gradle.testkit.runner.GradleRunner
 import java.io.File
 
+@DslMarker
+annotation class ProjectDSLMarker
+
 typealias ProjectDSLExpression<RECEIVER, FILE_RECEIVER, RESULT> = RECEIVER.() -> RESULT
 typealias ProjectDSLGenerator<RECEIVER, FILE_RECEIVER> = (ProjectDSL<RECEIVER, FILE_RECEIVER>, Project) -> RECEIVER
+@ProjectDSLMarker
 interface ProjectDSL<RECEIVER: ProjectDSL<RECEIVER, FILE_RECEIVER>, FILE_RECEIVER: ProjectFileDSL<FILE_RECEIVER>>: ProjectFileDSL<FILE_RECEIVER> {
 	val __project_dsl_generator: ProjectDSLGenerator<RECEIVER, FILE_RECEIVER>
 	val __project_dsl_project: Project

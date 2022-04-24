@@ -1,6 +1,4 @@
-package GradleScript.TestFixtures.RootProjectDSL
-
-import GradleScript.TestFixtures.ProjectDSL.*
+package GradleScript.TestFixtures.ProjectDSL
 
 typealias DefaultRootProjectDSLExpression<RESULT> = RootProjectDSLExpression<DefaultRootProjectDSL, DefaultProjectFileDSL, RESULT>
 typealias DefaultRootProjectDSLGenerator = RootProjectDSLGenerator<DefaultRootProjectDSL, DefaultProjectFileDSL>

@@ -4,24 +4,21 @@ import GradleScript.Strategies.FileUtils
 import java.io.File
 import java.nio.file.StandardCopyOption
 
-@DslMarker
-annotation class FileDSLMarker
-
-typealias FileDSLExpression<RECEIVER, RESULT> = RECEIVER.() -> RESULT
-typealias FileDSLGenerator<RECEIVER> = (FileDSL<RECEIVER>, File) -> RECEIVER
+typealias FileNodeGenericDSLExpression<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, RESULT> = GENERIC_RECEIVER.() -> RESULT
+typealias FileNodeGenericDSLGenerator<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER> = (FileDSLData<*, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>, File) -> GENERIC_RECEIVER
 @FileDSLMarker
-interface FileDSL<RECEIVER: FileDSL<RECEIVER>> {
-	val __file_dsl_generator: FileDSLGenerator<RECEIVER>
-	val __file_dsl_file: File
-	val __file_dsl_instance: RECEIVER
-
-	fun <RESULT> files(expression: FileDSLExpression<RECEIVER, RESULT>): RESULT
-	fun <RESULT> File.files(expression: FileDSLExpression<RECEIVER, RESULT>): RESULT
+interface FileNodeGenericDSL<
+	GENERIC_RECEIVER: FileNodeGenericDSL<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER>,
+	FILE_RECEIVER: FileNodeFileDSL<FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>,
+	DIRECTORY_RECEIVER: FileNodeDirectoryDSL<DIRECTORY_RECEIVER, FILE_RECEIVER, GENERIC_RECEIVER>
+>: FileDSLData<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER> {
+	fun <RESULT> files(expression: FileNodeGenericDSLExpression<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, RESULT>): RESULT
+	fun <RESULT> File.files(expression: FileNodeGenericDSLExpression<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, RESULT>): RESULT
 
 	operator fun String.not(): File
-	operator fun <RESULT> String.invoke(expression: FileDSLExpression<RECEIVER, RESULT>): RESULT
-	operator fun <RESULT> String.times(expression: FileDSLExpression<RECEIVER, RESULT>): RESULT
-	operator fun <RESULT> String.div(expression: FileDSLExpression<RECEIVER, RESULT>): RESULT
+	operator fun <RESULT> String.invoke(expression: FileNodeGenericDSLExpression<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, RESULT>): RESULT
+	operator fun <RESULT> String.times(expression: FileNodeFileDSLExpression<FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER, RESULT>): RESULT
+	operator fun <RESULT> String.div(expression: FileNodeDirectoryDSLExpression<DIRECTORY_RECEIVER, FILE_RECEIVER, GENERIC_RECEIVER, RESULT>): RESULT
 
 	fun file(vararg name: String): File
 	fun fileRelative(fileRel: File): String
@@ -57,32 +54,39 @@ interface FileDSL<RECEIVER: FileDSL<RECEIVER>> {
 	// "test.txt" .. "append content".encodeToByteArray()
 	operator fun String.rangeTo(content: ByteArray)
 }
-open class FileDSLImpl<RECEIVER: FileDSL<RECEIVER>>(
-	override val __file_dsl_generator: FileDSLGenerator<RECEIVER>,
-	override val __file_dsl_file: File
-): FileDSL<RECEIVER> {
-	override val __file_dsl_instance: RECEIVER
-		get() = this as RECEIVER
+open class FileNodeGenericDSLImpl<
+	GENERIC_RECEIVER: FileNodeGenericDSL<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER>,
+	FILE_RECEIVER: FileNodeFileDSL<FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>,
+	DIRECTORY_RECEIVER: FileNodeDirectoryDSL<DIRECTORY_RECEIVER, FILE_RECEIVER, GENERIC_RECEIVER>
+>(
+	override val __file_dsl_file_generator: FileNodeFileDSLGenerator<FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>,
+	override val __file_dsl_directory_generator: FileNodeDirectoryDSLGenerator<DIRECTORY_RECEIVER, FILE_RECEIVER, GENERIC_RECEIVER>,
+	override val __file_dsl_generic_generator: FileNodeGenericDSLGenerator<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER>,
+	override val __file_dsl_file: File,
+): FileNodeGenericDSL<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER> {
+	override val __file_dsl_instance: GENERIC_RECEIVER
+		get() = this as GENERIC_RECEIVER
 
-	override fun <RESULT> files(expression: FileDSLExpression<RECEIVER, RESULT>): RESULT =
-		__file_dsl_generator(__file_dsl_instance, __file_dsl_file).expression()
-	override fun <RESULT> File.files(expression: FileDSLExpression<RECEIVER, RESULT>): RESULT =
-		__file_dsl_generator(__file_dsl_instance, this).expression()
+	override fun <RESULT> files(expression: FileNodeGenericDSLExpression<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, RESULT>): RESULT =
+		__file_dsl_generic_generator(__file_dsl_instance, __file_dsl_file).expression()
+	override fun <RESULT> File.files(expression: FileNodeGenericDSLExpression<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, RESULT>): RESULT =
+		__file_dsl_generic_generator(__file_dsl_instance, this).expression()
 
 	override operator fun String.not(): File {
-		return if(!this.startsWith("/")) mkfile(this)
-		else mkdir(this)
+		if(this.startsWith("/") || this.startsWith("\\"))
+			return mkdir(this)
+		return mkfile(this)
 	}
-	override operator fun <RESULT> String.invoke(expression: FileDSLExpression<RECEIVER, RESULT>): RESULT {
-		return __file_dsl_generator(__file_dsl_instance, !this).expression()
+	override operator fun <RESULT> String.invoke(expression: FileNodeGenericDSLExpression<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, RESULT>): RESULT {
+		return __file_dsl_generic_generator(__file_dsl_instance, !this).expression()
 	}
-	override operator fun <RESULT> String.times(expression: FileDSLExpression<RECEIVER, RESULT>): RESULT {
+	override operator fun <RESULT> String.times(expression: FileNodeFileDSLExpression<FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER, RESULT>): RESULT {
 		if(this.startsWith("/") || this.startsWith("\\"))
 			throw IllegalStateException("File name should not begin with '/' or '\\'")
-		return __file_dsl_generator(__file_dsl_instance, !this).expression()
+		return __file_dsl_file_generator(__file_dsl_instance, !this).expression()
 	}
-	override operator fun <RESULT> String.div(expression: FileDSLExpression<RECEIVER, RESULT>): RESULT {
-		return __file_dsl_generator(__file_dsl_instance, !"/$this").expression()
+	override operator fun <RESULT> String.div(expression: FileNodeDirectoryDSLExpression<DIRECTORY_RECEIVER, FILE_RECEIVER, GENERIC_RECEIVER, RESULT>): RESULT {
+		return __file_dsl_directory_generator(__file_dsl_instance, !"/$this").expression()
 	}
 
 	override fun file(vararg name: String): File {
