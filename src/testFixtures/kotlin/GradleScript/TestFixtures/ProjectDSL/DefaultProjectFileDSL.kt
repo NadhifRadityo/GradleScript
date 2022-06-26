@@ -10,4 +10,7 @@ fun DefaultProjectFileDSLGenerator(): DefaultProjectFileDSLGenerator {
 open class DefaultProjectFileDSL(
 	__file_dsl_file: File,
 	__file_dsl_generator: DefaultProjectFileDSLGenerator = DefaultProjectFileDSLGenerator()
-): ProjectFileDSL<DefaultProjectFileDSL> by ProjectFileDSLImpl(__file_dsl_generator, __file_dsl_file) { }
+):
+	ProjectFileDSL<DefaultProjectFileDSL>
+		by ProjectFileDSLImpl(__file_dsl_generator, __file_dsl_file)
+{ }

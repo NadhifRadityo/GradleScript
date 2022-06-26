@@ -7,14 +7,20 @@ import org.junit.jupiter.api.BeforeAll
 
 interface BaseContextTest {
 	companion object {
+		private var nestedCount = 0;
+
 		@BeforeAll @JvmStatic
 		fun beforeAll() {
-			constructNoContext()
+			if(nestedCount == 0)
+				constructNoContext()
+			nestedCount++
 		}
 
 		@AfterAll @JvmStatic
 		fun afterAll() {
-			destructNoContext()
+			nestedCount--
+			if(nestedCount == 0)
+				destructNoContext()
 		}
 	}
 }

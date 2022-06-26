@@ -1,0 +1,18 @@
+package GradleScript.TestFixtures.ProjectDSL
+
+import java.io.File
+
+typealias DefaultProjectFileNodeDirectoryDSLExpression<RESULT> = ProjectFileNodeDirectoryDSLExpression<DefaultProjectFileNodeDirectoryDSL, DefaultProjectFileNodeFileDSL, DefaultProjectFileNodeGenericDSL, RESULT>
+typealias DefaultProjectFileNodeDirectoryDSLGenerator = ProjectFileNodeDirectoryDSLGenerator<DefaultProjectFileNodeDirectoryDSL, DefaultProjectFileNodeFileDSL, DefaultProjectFileNodeGenericDSL>
+fun DefaultProjectFileNodeDirectoryDSLGenerator(): DefaultProjectFileNodeDirectoryDSLGenerator {
+	return { dsl, file -> DefaultProjectFileNodeDirectoryDSL(file, dsl.__file_dsl_directory_generator, dsl.__file_dsl_file_generator, dsl.__file_dsl_generic_generator) }
+}
+open class DefaultProjectFileNodeDirectoryDSL(
+	__file_dsl_file: File,
+	__file_dsl_directory_generator: DefaultProjectFileNodeDirectoryDSLGenerator = DefaultProjectFileNodeDirectoryDSLGenerator(),
+	__file_dsl_file_generator: DefaultProjectFileNodeFileDSLGenerator = DefaultProjectFileNodeFileDSLGenerator(),
+	__file_dsl_generic_generator: DefaultProjectFileNodeGenericDSLGenerator = DefaultProjectFileNodeGenericDSLGenerator()
+):
+	ProjectFileNodeDirectoryDSL<DefaultProjectFileNodeDirectoryDSL, DefaultProjectFileNodeFileDSL, DefaultProjectFileNodeGenericDSL>
+		by ProjectFileNodeDirectoryDSLImpl(__file_dsl_file_generator, __file_dsl_directory_generator, __file_dsl_generic_generator, __file_dsl_file)
+{ }

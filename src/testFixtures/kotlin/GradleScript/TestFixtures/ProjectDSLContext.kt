@@ -23,8 +23,7 @@ interface ProjectDSLContext: BaseContextTest {
 			currentProject = oldCurrentProject
 		}
 	}
-	fun <T, RECEIVER: ProjectDSL<RECEIVER, FILE_RECEIVER>, FILE_RECEIVER: ProjectFileDSL<FILE_RECEIVER>>
-			ProjectDSL<RECEIVER, FILE_RECEIVER>.withProject(name: String = "Project_${randomString()}", expression: DefaultProjectDSLExpression<T>): Project {
+	fun <T> ProjectDSL<*, *, *, *>.withProject(name: String = "Project_${randomString()}", expression: DefaultProjectDSLExpression<T>): Project {
 		var parent: Project? = __project_dsl_project
 		while(parent != null && parent !is RootProject)
 			parent = parent.parent
@@ -42,22 +41,19 @@ interface ProjectDSLContext: BaseContextTest {
 			currentProject = oldCurrentProject
 		}
 	}
-	fun <RECEIVER: RootProjectDSL<RECEIVER, FILE_RECEIVER>, FILE_RECEIVER: ProjectFileDSL<FILE_RECEIVER>>
-			RootProjectDSL<RECEIVER, FILE_RECEIVER>.withDefaultSettingsSource() {
+	fun RootProjectDSL<*, *, *, *>.withDefaultSettingsSource() {
 		withSettingsSource {
 			-ROOTPROJECT_SETTINGS(
 				this@withDefaultSettingsSource.name, this@withDefaultSettingsSource.directory,
 				this@withDefaultSettingsSource.builds.isEmpty(), this@withDefaultSettingsSource.children)
 		}
 	}
-	fun <RECEIVER: ProjectDSL<RECEIVER, FILE_RECEIVER>, FILE_RECEIVER: ProjectFileDSL<FILE_RECEIVER>>
-			ProjectDSL<RECEIVER, FILE_RECEIVER>.withDefaultBuildSource() {
+	fun ProjectDSL<*, *, *, *>.withDefaultBuildSource() {
 		withBuildSource {
 			-ROOTPROJECT_BUILD(this@withDefaultBuildSource.name)
 		}
 	}
-	fun <T, RECEIVER: ProjectDSL<RECEIVER, FILE_RECEIVER>, FILE_RECEIVER: ProjectFileDSL<FILE_RECEIVER>>
-			ProjectDSL<RECEIVER, FILE_RECEIVER>.newScript(name: String = randomString(10) + ".gradle", expression: ProjectFileDSLExpression<FILE_RECEIVER, T>): File {
+	fun <FILE_RECEIVER: ProjectFileNodeFileDSL<FILE_RECEIVER, *, *>> ProjectDSL<*, FILE_RECEIVER, *, *>.newScript(name: String = randomString(10) + ".gradle", expression: ProjectFileNodeFileDSLExpression<FILE_RECEIVER, *, *, *>): File {
 		name * {
 			-SCRIPT_INITIAL(name)
 			expression()

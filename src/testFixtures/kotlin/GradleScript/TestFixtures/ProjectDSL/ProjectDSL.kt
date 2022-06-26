@@ -6,16 +6,21 @@ import java.io.File
 @DslMarker
 annotation class ProjectDSLMarker
 
-typealias ProjectDSLExpression<RECEIVER, FILE_RECEIVER, RESULT> = RECEIVER.() -> RESULT
-typealias ProjectDSLGenerator<RECEIVER, FILE_RECEIVER> = (ProjectDSL<RECEIVER, FILE_RECEIVER>, Project) -> RECEIVER
+typealias ProjectDSLExpression<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER, RESULT> = RECEIVER.() -> RESULT
+typealias ProjectDSLGenerator<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER> = (ProjectDSL<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>, Project) -> RECEIVER
 @ProjectDSLMarker
-interface ProjectDSL<RECEIVER: ProjectDSL<RECEIVER, FILE_RECEIVER>, FILE_RECEIVER: ProjectFileDSL<FILE_RECEIVER>>: ProjectFileDSL<FILE_RECEIVER> {
-	val __project_dsl_generator: ProjectDSLGenerator<RECEIVER, FILE_RECEIVER>
+interface ProjectDSL<
+	RECEIVER: ProjectDSL<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>,
+	FILE_RECEIVER: ProjectFileNodeFileDSL<FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>,
+	DIRECTORY_RECEIVER: ProjectFileNodeDirectoryDSL<DIRECTORY_RECEIVER, FILE_RECEIVER, GENERIC_RECEIVER>,
+	GENERIC_RECEIVER: ProjectFileNodeGenericDSL<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER>
+>: ProjectFileNodeDirectoryDSL<DIRECTORY_RECEIVER, FILE_RECEIVER, GENERIC_RECEIVER> {
+	val __project_dsl_generator: ProjectDSLGenerator<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>
 	val __project_dsl_project: Project
 	val __project_dsl_instance: RECEIVER
 
-	fun <RESULT> projects(expression: ProjectDSLExpression<RECEIVER, FILE_RECEIVER, RESULT>): RESULT
-	fun <RESULT> Project.projects(expression: ProjectDSLExpression<RECEIVER, FILE_RECEIVER, RESULT>): RESULT
+	fun <RESULT> projects(expression: ProjectDSLExpression<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER, RESULT>): RESULT
+	fun <RESULT> Project.projects(expression: ProjectDSLExpression<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER, RESULT>): RESULT
 
 	val parent: Project?
 	val directory: File
@@ -27,20 +32,30 @@ interface ProjectDSL<RECEIVER: ProjectDSL<RECEIVER, FILE_RECEIVER>, FILE_RECEIVE
 	val configureCallbacks: MutableList<GradleRunner.(GradleRunner) -> Unit>
 	fun configure(configureCallbacks: GradleRunner.(GradleRunner) -> Unit)
 
-	fun <RESULT> withBuildSource(expression: ProjectFileDSLExpression<FILE_RECEIVER, RESULT>): RESULT
+	fun <RESULT> withBuildSource(expression: ProjectFileNodeFileDSLExpression<FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER, RESULT>): RESULT
 }
-open class ProjectDSLImpl<RECEIVER: ProjectDSL<RECEIVER, FILE_RECEIVER>, FILE_RECEIVER: ProjectFileDSL<FILE_RECEIVER>>(
-	override val __project_dsl_generator: ProjectDSLGenerator<RECEIVER, FILE_RECEIVER>,
+open class ProjectDSLImpl<
+	RECEIVER: ProjectDSL<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>,
+	FILE_RECEIVER: ProjectFileNodeFileDSL<FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>,
+	DIRECTORY_RECEIVER: ProjectFileNodeDirectoryDSL<DIRECTORY_RECEIVER, FILE_RECEIVER, GENERIC_RECEIVER>,
+	GENERIC_RECEIVER: ProjectFileNodeGenericDSL<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER>
+>(
+	override val __project_dsl_generator: ProjectDSLGenerator<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>,
 	override val __project_dsl_project: Project,
-	__file_dsl_generator: ProjectFileDSLGenerator<FILE_RECEIVER>
-): ProjectDSL<RECEIVER, FILE_RECEIVER>, ProjectFileDSL<FILE_RECEIVER> by
-	ProjectFileDSLImpl(__file_dsl_generator, __project_dsl_project.directory) {
+	__file_dsl_file_generator: ProjectFileNodeFileDSLGenerator<FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>,
+	__file_dsl_directory_generator: ProjectFileNodeDirectoryDSLGenerator<DIRECTORY_RECEIVER, FILE_RECEIVER, GENERIC_RECEIVER>,
+	__file_dsl_generic_generator: ProjectFileNodeGenericDSLGenerator<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER>
+):
+	ProjectDSL<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>,
+	ProjectFileNodeDirectoryDSL<DIRECTORY_RECEIVER, FILE_RECEIVER, GENERIC_RECEIVER>
+		by ProjectFileNodeDirectoryDSLImpl(__file_dsl_file_generator, __file_dsl_directory_generator, __file_dsl_generic_generator, __project_dsl_project.directory) {
+
 	override val __project_dsl_instance: RECEIVER
 		get() = this as RECEIVER
 
-	override fun <RESULT> projects(expression: ProjectDSLExpression<RECEIVER, FILE_RECEIVER, RESULT>): RESULT =
+	override fun <RESULT> projects(expression: ProjectDSLExpression<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER, RESULT>): RESULT =
 		__project_dsl_generator(__project_dsl_instance, __project_dsl_project).expression()
-	override fun <RESULT> Project.projects(expression: ProjectDSLExpression<RECEIVER, FILE_RECEIVER, RESULT>): RESULT =
+	override fun <RESULT> Project.projects(expression: ProjectDSLExpression<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER, RESULT>): RESULT =
 		__project_dsl_generator(__project_dsl_instance, this).expression()
 
 	override val parent: Project?
@@ -60,10 +75,12 @@ open class ProjectDSLImpl<RECEIVER: ProjectDSL<RECEIVER, FILE_RECEIVER>, FILE_RE
 		get() = __project_dsl_project.configureCallbacks
 	override fun configure(configureCallbacks: GradleRunner.(GradleRunner) -> Unit) = __project_dsl_project.configure(configureCallbacks)
 
-	override fun <RESULT> withBuildSource(expression: ProjectFileDSLExpression<FILE_RECEIVER, RESULT>): RESULT {
+	override fun <RESULT> withBuildSource(expression: ProjectFileNodeFileDSLExpression<FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER, RESULT>): RESULT {
 		return __project_dsl_project.buildFile.files {
-			mkfile()
-			files(expression)
+			asNodeFile {
+				mkfile()
+				expression()
+			}
 		}
 	}
 }

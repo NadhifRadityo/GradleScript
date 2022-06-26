@@ -1,11 +1,15 @@
 package GradleScript.TestFixtures.ProjectDSL
 
-import GradleScript.TestFixtures.FileDSL.FileDSLGenerator
 import java.io.File
 
-typealias RootProjectDSLExpression<RECEIVER, FILE_RECEIVER, RESULT> = ProjectDSLExpression<RootProjectDSL<RECEIVER, FILE_RECEIVER>, FILE_RECEIVER, RESULT>
-typealias RootProjectDSLGenerator<RECEIVER, FILE_RECEIVER> = ProjectDSLGenerator<RootProjectDSL<RECEIVER, FILE_RECEIVER>, FILE_RECEIVER>
-interface RootProjectDSL<RECEIVER: RootProjectDSL<RECEIVER, FILE_RECEIVER>, FILE_RECEIVER: ProjectFileDSL<FILE_RECEIVER>>: ProjectDSL<RootProjectDSL<RECEIVER, FILE_RECEIVER>, FILE_RECEIVER> {
+typealias RootProjectDSLExpression<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER, RESULT> = ProjectDSLExpression<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER, RESULT>
+typealias RootProjectDSLGenerator<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER> = ProjectDSLGenerator<RootProjectDSL<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>
+interface RootProjectDSL<
+	RECEIVER: RootProjectDSL<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>,
+	FILE_RECEIVER: ProjectFileNodeFileDSL<FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>,
+	DIRECTORY_RECEIVER: ProjectFileNodeDirectoryDSL<DIRECTORY_RECEIVER, FILE_RECEIVER, GENERIC_RECEIVER>,
+	GENERIC_RECEIVER: ProjectFileNodeGenericDSL<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER>
+>: ProjectDSL<RootProjectDSL<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER> {
 	val __project_dsl_root_project: RootProject
 
 	val builds: List<RootProject>
@@ -14,13 +18,24 @@ interface RootProjectDSL<RECEIVER: RootProjectDSL<RECEIVER, FILE_RECEIVER>, FILE
 	var settingsFileDSL: DSL
 	val settingsFile: File
 
-	fun <RESULT> withSettingsSource(expression: ProjectFileDSLExpression<FILE_RECEIVER, RESULT>): RESULT
+	fun <RESULT> withSettingsSource(expression: ProjectFileNodeFileDSLExpression<FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER, RESULT>): RESULT
 }
-open class RootProjectDSLImpl<RECEIVER: RootProjectDSL<RECEIVER, FILE_RECEIVER>, FILE_RECEIVER: ProjectFileDSL<FILE_RECEIVER>>(
-	__project_dsl_generator: RootProjectDSLGenerator<RECEIVER, FILE_RECEIVER>,
+open class RootProjectDSLImpl<
+	RECEIVER: RootProjectDSL<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>,
+	FILE_RECEIVER: ProjectFileNodeFileDSL<FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>,
+	DIRECTORY_RECEIVER: ProjectFileNodeDirectoryDSL<DIRECTORY_RECEIVER, FILE_RECEIVER, GENERIC_RECEIVER>,
+	GENERIC_RECEIVER: ProjectFileNodeGenericDSL<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER>
+>(
+	__project_dsl_generator: RootProjectDSLGenerator<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>,
 	__project_dsl_project: RootProject,
-	__file_dsl_generator: FileDSLGenerator<ProjectFileDSL<FILE_RECEIVER>>
-): RootProjectDSL<RECEIVER, FILE_RECEIVER>, ProjectDSL<RootProjectDSL<RECEIVER, FILE_RECEIVER>, FILE_RECEIVER> by ProjectDSLImpl(__project_dsl_generator, __project_dsl_project, __file_dsl_generator) {
+	__file_dsl_file_generator: ProjectFileNodeFileDSLGenerator<FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>,
+	__file_dsl_directory_generator: ProjectFileNodeDirectoryDSLGenerator<DIRECTORY_RECEIVER, FILE_RECEIVER, GENERIC_RECEIVER>,
+	__file_dsl_generic_generator: ProjectFileNodeGenericDSLGenerator<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER>
+):
+	RootProjectDSL<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>,
+	ProjectDSL<RootProjectDSL<RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER>
+		by ProjectDSLImpl(__project_dsl_generator, __project_dsl_project, __file_dsl_file_generator, __file_dsl_directory_generator, __file_dsl_generic_generator) {
+
 	override val __project_dsl_instance: RECEIVER
 		get() = this as RECEIVER
 	override val __project_dsl_root_project: RootProject
@@ -37,10 +52,12 @@ open class RootProjectDSLImpl<RECEIVER: RootProjectDSL<RECEIVER, FILE_RECEIVER>,
 	override val settingsFile
 		get() = __project_dsl_root_project.settingsFile
 
-	override fun <RESULT> withSettingsSource(expression: ProjectFileDSLExpression<FILE_RECEIVER, RESULT>): RESULT {
+	override fun <RESULT> withSettingsSource(expression: ProjectFileNodeFileDSLExpression<FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER, RESULT>): RESULT {
 		return __project_dsl_root_project.settingsFile.files {
-			mkfile()
-			files(expression)
+			asNodeFile {
+				mkfile()
+				expression()
+			}
 		}
 	}
 }

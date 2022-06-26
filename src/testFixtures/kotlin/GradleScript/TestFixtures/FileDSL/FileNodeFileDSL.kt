@@ -11,8 +11,12 @@ interface FileNodeFileDSL<
 	DIRECTORY_RECEIVER: FileNodeDirectoryDSL<DIRECTORY_RECEIVER, FILE_RECEIVER, GENERIC_RECEIVER>,
 	GENERIC_RECEIVER: FileNodeGenericDSL<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER>
 >: FileDSLData<FILE_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER> {
-	fun <RESULT> files(expression: FileNodeFileDSLExpression<FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER, RESULT>): RESULT
-	fun <RESULT> File.files(expression: FileNodeFileDSLExpression<FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER, RESULT>): RESULT
+	fun <RESULT> asNodeGeneric(expression: FileNodeGenericDSLExpression<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, RESULT>): RESULT
+	@Deprecated("Cast to FileNodeGenericDSL(asNodeGeneric) first")
+	fun <RESULT> asNodeFile(expression: FileNodeFileDSLExpression<FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER, RESULT>): RESULT
+	@Deprecated("Cast to FileNodeGenericDSL(asNodeGeneric) first")
+	fun <RESULT> asNodeDirectory(expression: FileNodeDirectoryDSLExpression<DIRECTORY_RECEIVER, FILE_RECEIVER, GENERIC_RECEIVER, RESULT>): RESULT
+	fun <RESULT> File.files(expression: FileNodeGenericDSLExpression<GENERIC_RECEIVER, DIRECTORY_RECEIVER, FILE_RECEIVER, RESULT>): RESULT
 
 	operator fun String.not(): File
 	operator fun <RESULT> String.invoke(expression: FileNodeGenericDSLExpression<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, RESULT>): RESULT
@@ -48,10 +52,10 @@ open class FileNodeFileDSLImpl<
 	override val __file_dsl_instance: FILE_RECEIVER
 		get() = this as FILE_RECEIVER
 
-	override fun <RESULT> files(expression: FileNodeFileDSLExpression<FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER, RESULT>): RESULT =
-		__file_dsl_file_generator(__file_dsl_instance, __file_dsl_file).expression()
-	override fun <RESULT> File.files(expression: FileNodeFileDSLExpression<FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER, RESULT>): RESULT =
-		__file_dsl_file_generator(__file_dsl_instance, this).expression()
+	override fun <RESULT> asNodeGeneric(expression: FileNodeGenericDSLExpression<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, RESULT>): RESULT = __file_dsl_generic_generator(__file_dsl_instance, __file_dsl_file).expression()
+	override fun <RESULT> asNodeFile(expression: FileNodeFileDSLExpression<FILE_RECEIVER, DIRECTORY_RECEIVER, GENERIC_RECEIVER, RESULT>): RESULT = __file_dsl_file_generator(__file_dsl_instance, __file_dsl_file).expression()
+	override fun <RESULT> asNodeDirectory(expression: FileNodeDirectoryDSLExpression<DIRECTORY_RECEIVER, FILE_RECEIVER, GENERIC_RECEIVER, RESULT>): RESULT = __file_dsl_directory_generator(__file_dsl_instance, __file_dsl_file).expression()
+	override fun <RESULT> File.files(expression: FileNodeGenericDSLExpression<GENERIC_RECEIVER, FILE_RECEIVER, DIRECTORY_RECEIVER, RESULT>): RESULT = __file_dsl_generic_generator(__file_dsl_instance, this).expression()
 
 	override operator fun String.not(): File {
 		throw IllegalStateException("Cannot create node under file.")

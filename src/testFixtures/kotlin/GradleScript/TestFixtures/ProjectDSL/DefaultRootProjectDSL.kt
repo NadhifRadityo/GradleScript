@@ -1,12 +1,17 @@
 package GradleScript.TestFixtures.ProjectDSL
 
-typealias DefaultRootProjectDSLExpression<RESULT> = RootProjectDSLExpression<DefaultRootProjectDSL, DefaultProjectFileDSL, RESULT>
-typealias DefaultRootProjectDSLGenerator = RootProjectDSLGenerator<DefaultRootProjectDSL, DefaultProjectFileDSL>
+typealias DefaultRootProjectDSLExpression<RESULT> = RootProjectDSLExpression<DefaultRootProjectDSL, DefaultProjectFileNodeFileDSL, DefaultProjectFileNodeDirectoryDSL, DefaultProjectFileNodeGenericDSL, RESULT>
+typealias DefaultRootProjectDSLGenerator = RootProjectDSLGenerator<DefaultRootProjectDSL, DefaultProjectFileNodeFileDSL, DefaultProjectFileNodeDirectoryDSL, DefaultProjectFileNodeGenericDSL>
 fun DefaultRootProjectDSLGenerator(): DefaultRootProjectDSLGenerator {
-	return { dsl, project -> DefaultRootProjectDSL(project as RootProject, dsl.__project_dsl_generator, dsl.__file_dsl_generator) }
+	return { dsl, project -> DefaultRootProjectDSL(project as RootProject, dsl.__project_dsl_generator, dsl.__file_dsl_file_generator, dsl.__file_dsl_directory_generator, dsl.__file_dsl_generic_generator) }
 }
 open class DefaultRootProjectDSL(
 	__project_dsl_project: RootProject,
 	__project_dsl_generator: DefaultRootProjectDSLGenerator = DefaultRootProjectDSLGenerator(),
-	__file_dsl_generator: DefaultProjectFileDSLGenerator = DefaultProjectFileDSLGenerator()
-): RootProjectDSL<DefaultRootProjectDSL, DefaultProjectFileDSL> by RootProjectDSLImpl(__project_dsl_generator, __project_dsl_project, __file_dsl_generator) { }
+	__file_dsl_file_generator: DefaultProjectFileNodeFileDSLGenerator = DefaultProjectFileNodeFileDSLGenerator(),
+	__file_dsl_directory_generator: DefaultProjectFileNodeDirectoryDSLGenerator = DefaultProjectFileNodeDirectoryDSLGenerator(),
+	__file_dsl_generic_generator: DefaultProjectFileNodeGenericDSLGenerator = DefaultProjectFileNodeGenericDSLGenerator()
+):
+	RootProjectDSL<DefaultRootProjectDSL, DefaultProjectFileNodeFileDSL, DefaultProjectFileNodeDirectoryDSL, DefaultProjectFileNodeGenericDSL>
+		by RootProjectDSLImpl(__project_dsl_generator, __project_dsl_project, __file_dsl_file_generator, __file_dsl_directory_generator, __file_dsl_generic_generator)
+{ }

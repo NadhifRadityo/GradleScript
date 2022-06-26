@@ -10,4 +10,7 @@ fun DefaultKotlinClosureDSLGenerator(): DefaultKotlinClosureDSLGenerator {
 open class DefaultKotlinClosureDSL(
 	__kotlin_closure_dsl_closure: KotlinClosure,
 	__kotlin_closure_dsl_generator: DefaultKotlinClosureDSLGenerator = DefaultKotlinClosureDSLGenerator()
-): KotlinClosureDSL<DefaultKotlinClosureDSL> by KotlinClosureDSLImpl(__kotlin_closure_dsl_generator, __kotlin_closure_dsl_closure) { }
+):
+	KotlinClosureDSL<DefaultKotlinClosureDSL>
+		by KotlinClosureDSLImpl(__kotlin_closure_dsl_generator, __kotlin_closure_dsl_closure)
+{ }

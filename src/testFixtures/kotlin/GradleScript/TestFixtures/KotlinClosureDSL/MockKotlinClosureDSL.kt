@@ -2,7 +2,7 @@ package GradleScript.TestFixtures.KotlinClosureDSL
 
 import GradleScript.GroovyKotlinInteroperability.KotlinClosure
 
-typealias MockKotlinClosureDSLExpression<RECEIVER, RESULT> = KotlinClosureDSLExpression<MockKotlinClosureDSL<RECEIVER>, RESULT>
+typealias MockKotlinClosureDSLExpression<RECEIVER, RESULT> = KotlinClosureDSLExpression<RECEIVER, RESULT>
 typealias MockKotlinClosureDSLGenerator<RECEIVER> = KotlinClosureDSLGenerator<MockKotlinClosureDSL<RECEIVER>>
 interface MockKotlinClosureDSL<RECEIVER: MockKotlinClosureDSL<RECEIVER>>: KotlinClosureDSL<MockKotlinClosureDSL<RECEIVER>> {
 	val exception: Throwable?

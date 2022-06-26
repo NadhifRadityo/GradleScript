@@ -10,4 +10,7 @@ fun DefaultFileDSLGenerator(): DefaultFileDSLGenerator {
 open class DefaultFileDSL(
 	__file_dsl_file: File,
 	__file_dsl_generator: DefaultFileDSLGenerator = DefaultFileDSLGenerator()
-): FileDSL<DefaultFileDSL> by FileDSLImpl(__file_dsl_generator, __file_dsl_file) { }
+):
+	FileDSL<DefaultFileDSL>
+		by FileDSLImpl(__file_dsl_generator, __file_dsl_file)
+{ }

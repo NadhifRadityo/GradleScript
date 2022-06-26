@@ -12,5 +12,7 @@ open class DefaultFileNodeGenericDSL(
 	__file_dsl_generic_generator: DefaultFileNodeGenericDSLGenerator = DefaultFileNodeGenericDSLGenerator(),
 	__file_dsl_file_generator: DefaultFileNodeFileDSLGenerator = DefaultFileNodeFileDSLGenerator(),
 	__file_dsl_directory_generator: DefaultFileNodeDirectoryDSLGenerator = DefaultFileNodeDirectoryDSLGenerator()
-): FileNodeGenericDSL<DefaultFileNodeGenericDSL, DefaultFileNodeFileDSL, DefaultFileNodeDirectoryDSL> by
-	FileNodeGenericDSLImpl(__file_dsl_file_generator, __file_dsl_directory_generator, __file_dsl_generic_generator, __file_dsl_file) { }
+):
+	FileNodeGenericDSL<DefaultFileNodeGenericDSL, DefaultFileNodeFileDSL, DefaultFileNodeDirectoryDSL>
+		by FileNodeGenericDSLImpl(__file_dsl_file_generator, __file_dsl_directory_generator, __file_dsl_generic_generator, __file_dsl_file)
+{ }

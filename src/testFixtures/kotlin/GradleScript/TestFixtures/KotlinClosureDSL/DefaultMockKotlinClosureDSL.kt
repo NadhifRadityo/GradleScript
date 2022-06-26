@@ -10,4 +10,7 @@ fun DefaultMockKotlinClosureDSLGenerator(): DefaultMockKotlinClosureDSLGenerator
 open class DefaultMockKotlinClosureDSL(
 	__kotlin_closure_dsl_closure: KotlinClosure,
 	__kotlin_closure_dsl_generator: DefaultMockKotlinClosureDSLGenerator = DefaultMockKotlinClosureDSLGenerator()
-): MockKotlinClosureDSL<DefaultMockKotlinClosureDSL> by MockKotlinClosureDSLImpl(__kotlin_closure_dsl_generator, __kotlin_closure_dsl_closure) { }
+):
+	MockKotlinClosureDSL<DefaultMockKotlinClosureDSL>
+		by MockKotlinClosureDSLImpl(__kotlin_closure_dsl_generator, __kotlin_closure_dsl_closure)
+{ }
