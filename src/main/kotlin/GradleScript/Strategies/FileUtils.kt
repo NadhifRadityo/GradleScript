@@ -124,8 +124,7 @@ object FileUtils {
         if(result.exists()) return result
         ldebug("Making file: ${result.path}")
         mkdir(result.parentFile)
-        try { if(result.createNewFile()) return result }
-            catch(e: IOException) { throw Error(exception(e)) }
+        if(result.createNewFile()) return result
         throw IllegalStateException("Cannot make file")
     }
     @ExportGradle @JvmStatic
@@ -134,8 +133,7 @@ object FileUtils {
         if(result.exists()) return result
         ldebug("Making file: ${result.path}")
         mkdir(result.parentFile)
-        try { if(result.createNewFile()) return result }
-            catch(e: IOException) { throw Error(exception(e)) }
+        if(result.createNewFile()) return result
         throw IllegalStateException("Cannot make file")
     }
 

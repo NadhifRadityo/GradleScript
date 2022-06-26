@@ -16,6 +16,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.security.MessageDigest
 import java.util.*
+import java.util.regex.Pattern
 
 object HashUtils {
 	@JvmStatic private var cache: GroovyKotlinCache<HashUtils>? = null
@@ -62,20 +63,25 @@ object HashUtils {
 			ldebug("Creating exe certutil (${exe.path}) checksum $digest: ${file.path}")
 			val commandOutput = getCommandOutput(exe.canonicalPath, "-hashfile", file.canonicalPath, digest)
 				?: throw Error("Error occurred when running command")
-			return hexStringToBytes(commandOutput.split("\n").toTypedArray()[1].trim())
+			return hexStringToBytes(commandOutput.split("\n")[1].trim())
 		}
 	}
+	@JvmStatic
+	internal val lastHashPattern = Pattern.compile("\\s+([a-zA-Z0-9]+)\\s*$")
 	@ExportGradle @JvmStatic @Throws(Exception::class)
 	fun checksumExeOpenssl(exe: File, file: File, digest: String): ByteArray {
 		prog(arrayOf(exe, file, digest), HashUtils::class.java, "Creating openssl checksum", true).use { prog0 ->
 			prog0.pdo("Checksum openssl ($digest) ${file.path}")
 			ldebug("Creating exe openssl (${exe.path}) checksum $digest: ${file.path}")
-			val prefix = digest.uppercase(Locale.getDefault()) + "(" + file.canonicalPath + ")= "
 			val commandOutput = getCommandOutput(exe.canonicalPath, digest, file.canonicalPath)
 				?: throw Error("Error occurred when running command")
-			return hexStringToBytes(commandOutput.substring(prefix.length).trim())
+			val matcher = lastHashPattern.matcher(commandOutput)
+			matcher.find()
+			return hexStringToBytes(matcher.group(1))
 		}
 	}
+	@JvmStatic
+	internal val firstHashPattern = Pattern.compile("^\\s*[/\\\\]?([a-zA-Z0-9]+)\\s+")
 	@ExportGradle @JvmStatic @Throws(Exception::class)
 	fun checksumExeMdNsum(exe: File, file: File, N: Int): ByteArray {
 		prog(arrayOf(exe, file, N), HashUtils::class.java, "Creating md${N}sum checksum", true).use { prog0 ->
@@ -83,7 +89,9 @@ object HashUtils {
 			ldebug("Creating exe md${N}sum (${exe.path}) checksum: ${file.path}")
 			val commandOutput = getCommandOutput(exe.canonicalPath, file.canonicalPath)
 				?: throw Error("Error occurred when running command")
-			return hexStringToBytes(commandOutput.substring(1, 33).trim())
+			val matcher = firstHashPattern.matcher(commandOutput)
+			matcher.find()
+			return hexStringToBytes(matcher.group(1))
 		}
 	}
 	@ExportGradle @JvmStatic @Throws(Exception::class)
@@ -93,62 +101,19 @@ object HashUtils {
 			ldebug("Creating exe sha${N}sum (${exe.path}) checksum: ${file.path}")
 			val commandOutput = getCommandOutput(exe.canonicalPath, file.canonicalPath)
 				?: throw Error("Error occurred when running command")
-			return hexStringToBytes(commandOutput.substring(1, 41).trim())
+			val matcher = firstHashPattern.matcher(commandOutput)
+			matcher.find()
+			return hexStringToBytes(matcher.group(1))
 		}
 	}
 
 	@ExportGradle @JvmStatic @Throws(Exception::class)
-	internal fun getHashExpected(obj: Any?): String {
+	fun getHashExpected(obj: Any?): String {
 		return when(obj) {
 			is String -> obj
 			is ByteArray -> bytesToHexString(obj)
 			is File -> fileString(obj)
 			else -> throw IllegalStateException()
-		}
-	}
-
-	@ExportGradle @JvmStatic
-	fun HASH_JAVA_NATIVE(digest: String): (Any, Any?) -> Boolean {
-		return { obj, expected0 ->
-			val generated: String = when(obj) {
-				is File -> bytesToHexString(checksumJavaNative(obj, digest))
-				is ByteArray -> bytesToHexString(checksumJavaNative(obj, digest))
-				else -> throw IllegalStateException()
-			}
-			val expected = getHashExpected(expected0)
-			generated == expected
-		}
-	}
-	@ExportGradle @JvmStatic
-	fun HASH_EXE_CERTUTIL(exe: File, digest: String): (File, Any?) -> Boolean {
-		return { obj, expected0 ->
-			val generated: String = bytesToHexString(checksumExeCertutil(exe, obj, digest))
-			val expected = getHashExpected(expected0)
-			generated == expected
-		}
-	}
-	@ExportGradle @JvmStatic
-	fun HASH_EXE_OPENSSL(exe: File, digest: String): (File, Any?) -> Boolean {
-		return { obj, expected0 ->
-			val generated: String = bytesToHexString(checksumExeOpenssl(exe, obj, digest))
-			val expected = getHashExpected(expected0)
-			generated == expected
-		}
-	}
-	@ExportGradle @JvmStatic
-	fun HASH_EXE_MDNSUM(exe: File, N: Int): (File, Any?) -> Boolean {
-		return { obj, expected0 ->
-			val generated: String = bytesToHexString(checksumExeMdNsum(exe, obj, N))
-			val expected = getHashExpected(expected0)
-			generated == expected
-		}
-	}
-	@ExportGradle @JvmStatic
-	fun HASH_EXE_SHANSUM(exe: File, N: Int): (File, Any?) -> Boolean {
-		return { obj, expected0 ->
-			val generated: String = bytesToHexString(checksumExeShaNsum(exe, obj, N))
-			val expected = getHashExpected(expected0)
-			generated == expected
 		}
 	}
 }
