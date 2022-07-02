@@ -60,9 +60,11 @@ object AttributesUtils {
 		var hash = 0
 		for(i in 0 until length) {
 			val char = key.get(i)
-			hash = if(char in 'a'..'z') hash * 31 + (char.code - 0x20)
-			else if(char in 'A'..'Z' || char in '0'..'9' || char == '_' || char == '-') hash * 31 + char.code
-			else throw IllegalArgumentException(key)
+			hash = when(char) {
+				in 'a'..'z' -> hash * 31 + (char.code - 0x20)
+				in 'A'..'Z', in '0'..'9', '_', '-' -> hash * 31 + char.code
+				else -> throw IllegalArgumentException(key)
+			}
 		}
 		return hash
 	}
@@ -79,29 +81,39 @@ object AttributesUtils {
 		return result!!
 	}
 
-	@ExportGradle @JvmStatic @JvmOverloads fun <T> a_getObject(attributes: Attributes, key: String, converter: Function<String, T>, defaultValue: T? = null): T? { val value = attributes[attributeKey(key)] as String?; return if(value != null) converter.apply(value) else defaultValue }
-	@ExportGradle @JvmStatic @JvmOverloads fun a_getString(attributes: Attributes, key: String, defaultValue: String? = null): String? { return a_getObject(attributes, key, { s -> s }, defaultValue) }
-	@ExportGradle @JvmStatic @JvmOverloads fun a_getFile(attributes: Attributes, key: String, defaultValue: File? = null): File? { return a_getObject(attributes, key, { s -> file(s) }, defaultValue) }
-	@ExportGradle @JvmStatic @JvmOverloads fun a_getFiles(attributes: Attributes, key: String, defaultValue: Array<File>? = null): Array<File>? { return a_getObject(attributes, key, { s -> s.split(";").map { file(it) }.toTypedArray() }, defaultValue) }
-	@ExportGradle @JvmStatic @JvmOverloads fun a_getByte(attributes: Attributes, key: String, defaultValue: Byte = 0.toByte()): Byte { return a_getObject(attributes, key, { s -> java.lang.Byte.valueOf(s) }, defaultValue)!! }
-	@ExportGradle @JvmStatic @JvmOverloads fun a_getBoolean(attributes: Attributes, key: String, defaultValue: Boolean = false): Boolean { return a_getObject(attributes, key, { s -> java.lang.Boolean.valueOf(s) }, defaultValue)!! }
-	@ExportGradle @JvmStatic @JvmOverloads fun a_getChar(attributes: Attributes, key: String, defaultValue: Char = 0.toChar()): Char { return a_getObject(attributes, key, { s -> s[0] }, defaultValue)!! }
-	@ExportGradle @JvmStatic @JvmOverloads fun a_getShort(attributes: Attributes, key: String, defaultValue: Short = 0.toShort()): Short { return a_getObject(attributes, key, { s -> java.lang.Short.valueOf(s) }, defaultValue)!! }
-	@ExportGradle @JvmStatic @JvmOverloads fun a_getInt(attributes: Attributes, key: String, defaultValue: Int = 0): Int { return a_getObject(attributes, key, { s -> java.lang.Integer.valueOf(s) }, defaultValue)!! }
-	@ExportGradle @JvmStatic @JvmOverloads fun a_getLong(attributes: Attributes, key: String, defaultValue: Long = 0): Long { return a_getObject(attributes, key, { s -> java.lang.Long.valueOf(s) }, defaultValue)!! }
-	@ExportGradle @JvmStatic @JvmOverloads fun a_getFloat(attributes: Attributes, key: String, defaultValue: Float = 0f): Float { return a_getObject(attributes, key, { s -> java.lang.Float.valueOf(s) }, defaultValue)!! }
-	@ExportGradle @JvmStatic @JvmOverloads fun a_getDouble(attributes: Attributes, key: String, defaultValue: Double = 0.0): Double { return a_getObject(attributes, key, { s -> java.lang.Double.valueOf(s) }, defaultValue)!! }
-	@ExportGradle @JvmStatic fun <T> a_setObject(attributes: Attributes, key: String, converter: (T) -> String?, value: T) { attributes[attributeKey(key)] = converter(value) }
-	@ExportGradle @JvmStatic fun a_setObject(attributes: Attributes, key: String, value: Any?) { a_setObject(attributes, key, { v -> v?.toString() }, value) }
-	@ExportGradle @JvmStatic fun a_setString(attributes: Attributes, key: String, value: String?) { a_setObject(attributes, key, { v -> v }, value) }
-	@ExportGradle @JvmStatic fun a_setFile(attributes: Attributes, key: String, value: File?) { a_setObject(attributes, key, { v -> v?.canonicalPath }, value) }
-	@ExportGradle @JvmStatic fun a_setFiles(attributes: Attributes, key: String, value: Array<File>?) { a_setObject(attributes, key, { v -> v?.joinToString(";") { it.canonicalPath } }, value) }
-	@ExportGradle @JvmStatic fun a_setByte(attributes: Attributes, key: String, value: Byte) { a_setObject(attributes, key, { v -> v.toString() }, value) }
-	@ExportGradle @JvmStatic fun a_setBoolean(attributes: Attributes, key: String, value: Boolean) { a_setObject(attributes, key, { v -> v.toString() }, value) }
-	@ExportGradle @JvmStatic fun a_setChar(attributes: Attributes, key: String, value: Char) { a_setObject(attributes, key, { v -> v.toString() }, value) }
-	@ExportGradle @JvmStatic fun a_setShort(attributes: Attributes, key: String, value: Short) { a_setObject(attributes, key, { v -> v.toString() }, value) }
-	@ExportGradle @JvmStatic fun a_setInt(attributes: Attributes, key: String, value: Int) { a_setObject(attributes, key, { v -> v.toString() }, value) }
-	@ExportGradle @JvmStatic fun a_setLong(attributes: Attributes, key: String, value: Long) { a_setObject(attributes, key, { v -> v.toString() }, value) }
-	@ExportGradle @JvmStatic fun a_setFloat(attributes: Attributes, key: String, value: Float) { a_setObject(attributes, key, { v -> v.toString() }, value) }
-	@ExportGradle @JvmStatic fun a_setDouble(attributes: Attributes, key: String, value: Double) { a_setObject(attributes, key, { v -> v.toString() }, value) }
+	inline fun <reified T> __a_get(attributes: Attributes, key: String, converter: (String) -> T, defaultValue: T): T {
+		val value = attributes[attributeKey(key)] as String?
+		return if(value != null) converter(value) else defaultValue
+	}
+	@ExportGradle @JvmStatic inline fun <reified T> a_getObject(attributes: Attributes, key: String, converter: (String) -> T, defaultValue: T): T { return __a_get(attributes, key, converter, defaultValue) }
+	@ExportGradle @JvmStatic inline fun <reified T> a_getObject(attributes: Attributes, key: String, converter: (String) -> T): T? { return __a_get(attributes, key, converter, null) }
+	@ExportGradle @JvmStatic fun a_getString(attributes: Attributes, key: String, defaultValue: String): String { return __a_get(attributes, key, { it }, defaultValue) }
+	@ExportGradle @JvmStatic fun a_getString(attributes: Attributes, key: String): String? { return __a_get(attributes, key, { it }, null) }
+	@ExportGradle @JvmStatic @JvmOverloads fun a_getByte(attributes: Attributes, key: String, defaultValue: Byte = 0.toByte()): Byte { return __a_get(attributes, key, { java.lang.Byte.valueOf(it) }, defaultValue) }
+	@ExportGradle @JvmStatic @JvmOverloads fun a_getBoolean(attributes: Attributes, key: String, defaultValue: Boolean = false): Boolean { return __a_get(attributes, key, { java.lang.Boolean.valueOf(it) }, defaultValue) }
+	@ExportGradle @JvmStatic @JvmOverloads fun a_getChar(attributes: Attributes, key: String, defaultValue: Char = 0.toChar()): Char { return __a_get(attributes, key, { it[0] }, defaultValue) }
+	@ExportGradle @JvmStatic @JvmOverloads fun a_getShort(attributes: Attributes, key: String, defaultValue: Short = 0.toShort()): Short { return __a_get(attributes, key, { java.lang.Short.valueOf(it) }, defaultValue) }
+	@ExportGradle @JvmStatic @JvmOverloads fun a_getInt(attributes: Attributes, key: String, defaultValue: Int = 0): Int { return __a_get(attributes, key, { java.lang.Integer.valueOf(it) }, defaultValue) }
+	@ExportGradle @JvmStatic @JvmOverloads fun a_getLong(attributes: Attributes, key: String, defaultValue: Long = 0): Long { return __a_get(attributes, key, { java.lang.Long.valueOf(it) }, defaultValue) }
+	@ExportGradle @JvmStatic @JvmOverloads fun a_getFloat(attributes: Attributes, key: String, defaultValue: Float = 0f): Float { return __a_get(attributes, key, { java.lang.Float.valueOf(it) }, defaultValue) }
+	@ExportGradle @JvmStatic @JvmOverloads fun a_getDouble(attributes: Attributes, key: String, defaultValue: Double = 0.0): Double { return __a_get(attributes, key, { java.lang.Double.valueOf(it) }, defaultValue) }
+
+	inline fun <reified T> __a_set(attributes: Attributes, key: String, value: T, converter: (T) -> String?) {
+		attributes[attributeKey(key)] = converter(value)
+	}
+	@ExportGradle @JvmStatic inline fun <reified T> a_setObject(attributes: Attributes, key: String, value: T, converter: (T) -> String?) { __a_set(attributes, key, value, converter) }
+	@ExportGradle @JvmStatic fun a_setString(attributes: Attributes, key: String, value: String) { __a_set(attributes, key, value, { it }) }
+	@ExportGradle @JvmStatic fun a_setByte(attributes: Attributes, key: String, value: Byte) { __a_set(attributes, key, value, { it.toString() }) }
+	@ExportGradle @JvmStatic fun a_setBoolean(attributes: Attributes, key: String, value: Boolean) { __a_set(attributes, key, value, { it.toString() }) }
+	@ExportGradle @JvmStatic fun a_setChar(attributes: Attributes, key: String, value: Char) { __a_set(attributes, key, value, { it.toString() }) }
+	@ExportGradle @JvmStatic fun a_setShort(attributes: Attributes, key: String, value: Short) { __a_set(attributes, key, value, { it.toString() }) }
+	@ExportGradle @JvmStatic fun a_setInt(attributes: Attributes, key: String, value: Int) { __a_set(attributes, key, value, { it.toString() }) }
+	@ExportGradle @JvmStatic fun a_setLong(attributes: Attributes, key: String, value: Long) { __a_set(attributes, key, value, { it.toString() }) }
+	@ExportGradle @JvmStatic fun a_setFloat(attributes: Attributes, key: String, value: Float) { __a_set(attributes, key, value, { it.toString() }) }
+	@ExportGradle @JvmStatic fun a_setDouble(attributes: Attributes, key: String, value: Double) { __a_set(attributes, key, value, { it.toString() }) }
+
+	@ExportGradle @JvmStatic val file_to_string = { it: File? -> it?.canonicalPath }
+	@ExportGradle @JvmStatic val files_to_string = { it: Iterable<File?>? -> it?.filterNotNull()?.joinToString(";") { it.canonicalPath } }
+	@ExportGradle @JvmStatic val string_to_file = { it: String -> file(it) }
+	@ExportGradle @JvmStatic val string_to_files = { it: String -> it.split(";").map { file(it) } }
 }

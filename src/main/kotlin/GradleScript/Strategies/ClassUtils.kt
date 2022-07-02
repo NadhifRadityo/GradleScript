@@ -80,7 +80,7 @@ object ClassUtils {
 
 	@ExportGradle @JvmStatic
 	fun overrideFinal(obj: Any?, field: Field, newValue: Any?) {
-		val useUnsafe: Boolean = JAVA_DETECTION_VERSION > 12
+		val useUnsafe: Boolean = JAVA_DETECTION_VERSION > 8
 		var exception: Throwable? = null
 		try {
 			if(!useUnsafe) {
