@@ -16,6 +16,7 @@ import GradleScript.Strategies.RuntimeUtils.vmArguments
 import groovy.lang.Closure
 import java.lang.reflect.Method
 
+@Deprecated("Implement your own logic.")
 object JavascriptUtils {
     @JvmStatic private var cache: GroovyKotlinCache<JavascriptUtils>? = null
     @ExportGradle @JvmStatic
@@ -72,8 +73,8 @@ object JavascriptUtils {
             else if(JAVA_DETECTION_VERSION <= 8) lwarn("Error may occur, javascript functionality may be limited. It is recommended to use java >= 9")
         }
         return@lazy lambda@{ source: String, args: Array<out Any?> ->
-            var engine = CONSTRUCTOR_ScriptEngineManager.newInstance()
-            engine = METHOD_ScriptEngineManager_getEngineByName.invoke(engine, "nashorn")
+            val context = CONSTRUCTOR_ScriptEngineManager.newInstance()
+            val engine = METHOD_ScriptEngineManager_getEngineByName.invoke(context, "nashorn")
             val function = METHOD_ScriptEngine_eval.invoke(engine, source)
             return@lambda METHOD_JSObject_call.invoke(function, null, args)
         }
@@ -114,9 +115,5 @@ object JavascriptUtils {
         val result = KotlinClosure("js ($source)")
         result.overloads += KotlinClosure.KLambdaOverload { args -> runJavascript(source, *args) }
         return result as Closure<T?>
-    }
-    @ExportGradle @JvmStatic
-    fun <T> runJavascriptAsCallbackF(source: String): (Array<out Any?>) -> Any? {
-        return { args -> runJavascript(source, *args) }
     }
 }
