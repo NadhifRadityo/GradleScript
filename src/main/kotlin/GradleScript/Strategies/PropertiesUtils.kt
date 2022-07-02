@@ -29,40 +29,35 @@ object PropertiesUtils {
     }
 
     @ExportGradle @JvmStatic
-    fun __get_defaults_properties(properties: Properties?): Properties? {
+    fun __get_defaults_properties(properties: Properties): Properties? {
         return unsafe.getObject(properties, AFIELD_Properties_defaults) as Properties?
     }
     @ExportGradle @JvmStatic
-    fun extendProperties(original: Properties?, extend: Properties?, nullable: Boolean): Properties? {
-        if(nullable && sizeNonDefaultProperties(original) == 0 && sizeAllProperties(extend) == 0) return null
+    fun extendProperties(original: Properties, extend: Properties): Properties {
         val properties = Properties(extend)
-        if(original != null) properties.putAll(original)
+        properties.putAll(original)
         return properties
     }
     @ExportGradle @JvmStatic
-    fun copyAllProperties(properties: Properties?, nullable: Boolean): Properties? {
-        if(nullable && sizeAllProperties(properties) == 0) return null
+    fun copyAllProperties(properties: Properties): Properties {
         val result = Properties()
         enumerateAllProperties(properties, result)
         return result
     }
     @ExportGradle @JvmStatic
-    fun copyNonDefaultProperties(properties: Properties?, nullable: Boolean): Properties? {
-        if(nullable && sizeNonDefaultProperties(properties) == 0) return null
+    fun copyNonDefaultProperties(properties: Properties): Properties {
         val result = Properties()
         enumerateNonDefaultProperties(properties, result)
         return result
     }
     @ExportGradle @JvmStatic
-    fun enumerateAllProperties(properties: Properties?, hashtable: Hashtable<Any?, Any?>) {
-        if(properties == null) return
+    fun enumerateAllProperties(properties: Properties, hashtable: Hashtable<Any?, Any?>) {
         val defaults = __get_defaults_properties(properties)
         if(defaults != null) enumerateAllProperties(defaults, hashtable)
         enumerateNonDefaultProperties(properties, hashtable)
     }
     @ExportGradle @JvmStatic
-    fun enumerateNonDefaultProperties(properties: Properties?, hashtable: Hashtable<Any?, Any?>) {
-        if(properties == null) return
+    fun enumerateNonDefaultProperties(properties: Properties, hashtable: Hashtable<Any?, Any?>) {
         val enumeration = properties.keys()
         while(enumeration.hasMoreElements()) {
             val key = enumeration.nextElement()
@@ -71,63 +66,62 @@ object PropertiesUtils {
         }
     }
     @ExportGradle @JvmStatic
-    fun sizeAllProperties(properties: Properties?): Int {
-        if(properties == null) return 0
+    fun sizeAllProperties(properties: Properties): Int {
         val defaults = __get_defaults_properties(properties)
         return (if(defaults != null) sizeAllProperties(defaults) else 0) + sizeNonDefaultProperties(properties)
     }
     @ExportGradle @JvmStatic
-    fun sizeNonDefaultProperties(properties: Properties?): Int {
-        return properties?.size ?: 0
+    fun sizeNonDefaultProperties(properties: Properties): Int {
+        return properties.size
     }
 
-    @ExportGradle @JvmStatic
-    fun <T> pn_getObject(properties: Properties, key: String, type: Class<T>, defaultValue: T?): T? {
+    inline fun <reified T> __pn_get(properties: Properties, key: String, defaultValue: T, type: Class<T> = T::class.java): T {
         val obj = properties[key]
-        return if(type.isInstance(obj)) obj as T? else defaultValue
+        return if(type.isInstance(obj)) obj as T else defaultValue
     }
-    @ExportGradle @JvmStatic fun <T> pn_getObject(properties: Properties, key: String, type: Class<T>): T? { return pn_getObject(properties, key, type, null) }
-    @ExportGradle @JvmStatic @JvmOverloads fun <T> pn_getObject(properties: Properties, key: String, defaultValue: T? = null): T? { return pn_getObject(properties, key, Any::class.java, defaultValue) as T? }
-    @ExportGradle @JvmStatic @JvmOverloads fun pn_getByte(properties: Properties, key: String, defaultValue: Byte = 0.toByte()): Byte { return pn_getObject(properties, key, Byte::class.java, defaultValue)!! }
-    @ExportGradle @JvmStatic @JvmOverloads fun pn_getBoolean(properties: Properties, key: String, defaultValue: Boolean = false): Boolean { return pn_getObject(properties, key, Boolean::class.java, defaultValue)!! }
-    @ExportGradle @JvmStatic @JvmOverloads fun pn_getChar(properties: Properties, key: String, defaultValue: Char = 0.toChar()): Char { return pn_getObject(properties, key, Char::class.java, defaultValue)!! }
-    @ExportGradle @JvmStatic @JvmOverloads fun pn_getShort(properties: Properties, key: String, defaultValue: Short = 0.toShort()): Short { return pn_getObject(properties, key, Short::class.java, defaultValue)!! }
-    @ExportGradle @JvmStatic @JvmOverloads fun pn_getInt(properties: Properties, key: String, defaultValue: Int = 0): Int { return pn_getObject(properties, key, Int::class.java, defaultValue)!! }
-    @ExportGradle @JvmStatic @JvmOverloads fun pn_getLong(properties: Properties, key: String, defaultValue: Long = 0): Long { return pn_getObject(properties, key, Long::class.java, defaultValue)!! }
-    @ExportGradle @JvmStatic @JvmOverloads fun pn_getFloat(properties: Properties, key: String, defaultValue: Float = 0f): Float { return pn_getObject(properties, key, Float::class.java, defaultValue)!! }
-    @ExportGradle @JvmStatic @JvmOverloads fun pn_getDouble(properties: Properties, key: String, defaultValue: Double = 0.0): Double { return pn_getObject(properties, key, Double::class.java, defaultValue)!! }
+    @ExportGradle @JvmStatic @JvmOverloads inline fun <reified T> pn_getObject(properties: Properties, key: String, type: Class<T> = T::class.java, defaultValue: T): T { return __pn_get(properties, key, defaultValue, type) }
+    @ExportGradle @JvmStatic @JvmOverloads inline fun <reified T> pn_getObject(properties: Properties, key: String, type: Class<T> = T::class.java): T? { return __pn_get(properties, key, null, type as Class<T?>) }
+    @ExportGradle @JvmStatic @JvmOverloads fun pn_getByte(properties: Properties, key: String, defaultValue: Byte = 0.toByte()): Byte { return __pn_get(properties, key, defaultValue) }
+    @ExportGradle @JvmStatic @JvmOverloads fun pn_getBoolean(properties: Properties, key: String, defaultValue: Boolean = false): Boolean { return __pn_get(properties, key, defaultValue) }
+    @ExportGradle @JvmStatic @JvmOverloads fun pn_getChar(properties: Properties, key: String, defaultValue: Char = 0.toChar()): Char { return __pn_get(properties, key, defaultValue) }
+    @ExportGradle @JvmStatic @JvmOverloads fun pn_getShort(properties: Properties, key: String, defaultValue: Short = 0.toShort()): Short { return __pn_get(properties, key, defaultValue) }
+    @ExportGradle @JvmStatic @JvmOverloads fun pn_getInt(properties: Properties, key: String, defaultValue: Int = 0): Int { return __pn_get(properties, key, defaultValue) }
+    @ExportGradle @JvmStatic @JvmOverloads fun pn_getLong(properties: Properties, key: String, defaultValue: Long = 0): Long { return __pn_get(properties, key, defaultValue) }
+    @ExportGradle @JvmStatic @JvmOverloads fun pn_getFloat(properties: Properties, key: String, defaultValue: Float = 0f): Float { return __pn_get(properties, key, defaultValue) }
+    @ExportGradle @JvmStatic @JvmOverloads fun pn_getDouble(properties: Properties, key: String, defaultValue: Double = 0.0): Double { return __pn_get(properties, key, defaultValue) }
 
-    @ExportGradle @JvmStatic
-    fun <T> p_getObject(properties: Properties, key: String, type: Class<T>, defaultValue: T?): T? {
-        val obj = properties[key]
-        val castedObject = if(type.isInstance(obj)) obj as T? else null
-        if(castedObject != null) return castedObject
-        val defaults = __get_defaults_properties(properties) ?: return defaultValue
-        return p_getObject(defaults, key, type, defaultValue)
+    inline fun <reified T> __p_get(properties: Properties, key: String, defaultValue: T, type: Class<T> = T::class.java): T {
+        var currentProperties: Properties? = properties
+        while(currentProperties != null) {
+            val obj = properties[key]
+            val castedObject = if(type.isInstance(obj)) obj as T else null
+            if(castedObject != null) return castedObject
+            currentProperties = __get_defaults_properties(currentProperties)
+        }
+        return defaultValue
     }
-    @ExportGradle @JvmStatic fun <T> p_getObject(properties: Properties, key: String, type: Class<T>): T? { return p_getObject(properties, key, type, null) }
-    @ExportGradle @JvmStatic @JvmOverloads fun <T> p_getObject(properties: Properties, key: String, defaultValue: T? = null): T? { return p_getObject(properties, key, Any::class.java, defaultValue) as T? }
-    @ExportGradle @JvmStatic @JvmOverloads fun p_getByte(properties: Properties, key: String, defaultValue: Byte = 0.toByte()): Byte { return p_getObject(properties, key, Byte::class.java, defaultValue)!! }
-    @ExportGradle @JvmStatic @JvmOverloads fun p_getBoolean(properties: Properties, key: String, defaultValue: Boolean = false): Boolean { return p_getObject(properties, key, Boolean::class.java, defaultValue)!! }
-    @ExportGradle @JvmStatic @JvmOverloads fun p_getChar(properties: Properties, key: String, defaultValue: Char = 0.toChar()): Char { return p_getObject(properties, key, Char::class.java, defaultValue)!! }
-    @ExportGradle @JvmStatic @JvmOverloads fun p_getShort(properties: Properties, key: String, defaultValue: Short = 0.toShort()): Short { return p_getObject(properties, key, Short::class.java, defaultValue)!! }
-    @ExportGradle @JvmStatic @JvmOverloads fun p_getInt(properties: Properties, key: String, defaultValue: Int = 0): Int { return p_getObject(properties, key, Int::class.java, defaultValue)!! }
-    @ExportGradle @JvmStatic @JvmOverloads fun p_getLong(properties: Properties, key: String, defaultValue: Long = 0): Long { return p_getObject(properties, key, Long::class.java, defaultValue)!! }
-    @ExportGradle @JvmStatic @JvmOverloads fun p_getFloat(properties: Properties, key: String, defaultValue: Float = 0f): Float { return p_getObject(properties, key, Float::class.java, defaultValue)!! }
-    @ExportGradle @JvmStatic @JvmOverloads fun p_getDouble(properties: Properties, key: String, defaultValue: Double = 0.0): Double { return p_getObject(properties, key, Double::class.java, defaultValue)!! }
+    @ExportGradle @JvmStatic @JvmOverloads inline fun <reified T> p_getObject(properties: Properties, key: String, type: Class<T> = T::class.java, defaultValue: T): T { return __p_get(properties, key, defaultValue, type) }
+    @ExportGradle @JvmStatic @JvmOverloads inline fun <reified T> p_getObject(properties: Properties, key: String, type: Class<T> = T::class.java): T? { return __p_get(properties, key, null, type as Class<T?>) }
+    @ExportGradle @JvmStatic @JvmOverloads fun p_getByte(properties: Properties, key: String, defaultValue: Byte = 0.toByte()): Byte { return __p_get(properties, key, defaultValue) }
+    @ExportGradle @JvmStatic @JvmOverloads fun p_getBoolean(properties: Properties, key: String, defaultValue: Boolean = false): Boolean { return __p_get(properties, key, defaultValue) }
+    @ExportGradle @JvmStatic @JvmOverloads fun p_getChar(properties: Properties, key: String, defaultValue: Char = 0.toChar()): Char { return __p_get(properties, key, defaultValue) }
+    @ExportGradle @JvmStatic @JvmOverloads fun p_getShort(properties: Properties, key: String, defaultValue: Short = 0.toShort()): Short { return __p_get(properties, key, defaultValue) }
+    @ExportGradle @JvmStatic @JvmOverloads fun p_getInt(properties: Properties, key: String, defaultValue: Int = 0): Int { return __p_get(properties, key, defaultValue) }
+    @ExportGradle @JvmStatic @JvmOverloads fun p_getLong(properties: Properties, key: String, defaultValue: Long = 0): Long { return __p_get(properties, key, defaultValue) }
+    @ExportGradle @JvmStatic @JvmOverloads fun p_getFloat(properties: Properties, key: String, defaultValue: Float = 0f): Float { return __p_get(properties, key, defaultValue) }
+    @ExportGradle @JvmStatic @JvmOverloads fun p_getDouble(properties: Properties, key: String, defaultValue: Double = 0.0): Double { return __p_get(properties, key, defaultValue) }
 
-    @ExportGradle @JvmStatic
-    fun <T> p_setObject(properties: Properties, key: String, type: Class<T>?, value: T?) {
+    inline fun <reified T> __p_set(properties: Properties, key: String, value: T) {
         if(value == null) return
         properties[key] = value
     }
-    @ExportGradle @JvmStatic fun <T> p_setObject(properties: Properties, key: String, value: T) { p_setObject(properties, key, Any::class.java, value) }
-    @ExportGradle @JvmStatic fun p_setByte(properties: Properties, key: String, value: Byte) { p_setObject(properties, key, Byte::class.java, value) }
-    @ExportGradle @JvmStatic fun p_setBoolean(properties: Properties, key: String, value: Boolean) { p_setObject(properties, key, Boolean::class.java, value) }
-    @ExportGradle @JvmStatic fun p_setChar(properties: Properties, key: String, value: Char) { p_setObject(properties, key, Char::class.java, value) }
-    @ExportGradle @JvmStatic fun p_setShort(properties: Properties, key: String, value: Short) { p_setObject(properties, key, Short::class.java, value) }
-    @ExportGradle @JvmStatic fun p_setInt(properties: Properties, key: String, value: Int) { p_setObject(properties, key, Int::class.java, value) }
-    @ExportGradle @JvmStatic fun p_setLong(properties: Properties, key: String, value: Long) { p_setObject(properties, key, Long::class.java, value) }
-    @ExportGradle @JvmStatic fun p_setFloat(properties: Properties, key: String, value: Float) { p_setObject(properties, key, Float::class.java, value) }
-    @ExportGradle @JvmStatic fun p_setDouble(properties: Properties, key: String, value: Double) { p_setObject(properties, key, Double::class.java, value) }
+    @ExportGradle @JvmStatic inline fun <reified T> p_setObject(properties: Properties, key: String, value: T) { __p_set(properties, key, value) }
+    @ExportGradle @JvmStatic fun p_setByte(properties: Properties, key: String, value: Byte) { __p_set(properties, key, value) }
+    @ExportGradle @JvmStatic fun p_setBoolean(properties: Properties, key: String, value: Boolean) { __p_set(properties, key, value) }
+    @ExportGradle @JvmStatic fun p_setChar(properties: Properties, key: String, value: Char) { __p_set(properties, key, value) }
+    @ExportGradle @JvmStatic fun p_setShort(properties: Properties, key: String, value: Short) { __p_set(properties, key, value) }
+    @ExportGradle @JvmStatic fun p_setInt(properties: Properties, key: String, value: Int) { __p_set(properties, key, value) }
+    @ExportGradle @JvmStatic fun p_setLong(properties: Properties, key: String, value: Long) { __p_set(properties, key, value) }
+    @ExportGradle @JvmStatic fun p_setFloat(properties: Properties, key: String, value: Float) { __p_set(properties, key, value) }
+    @ExportGradle @JvmStatic fun p_setDouble(properties: Properties, key: String, value: Double) { __p_set(properties, key, value) }
 }
