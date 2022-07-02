@@ -4,7 +4,7 @@ import GradleScript.TestFixtures.FileDSL.DefaultFileNodeGenericDSL
 import GradleScript.TestFixtures.FileDSL.DefaultFileNodeGenericDSLExpression
 import java.io.File
 
-interface FileDSLContext {
+interface FileDSLContext: BaseTest {
 	fun <T> withFile(file: File, expression: DefaultFileNodeGenericDSLExpression<T>): T {
 		return DefaultFileNodeGenericDSL(file).expression()
 	}

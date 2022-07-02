@@ -3,11 +3,13 @@ package GradleScript.TestFixtures
 import GradleScript.Strategies.FileUtils.file
 import GradleScript.Strategies.StringUtils.randomString
 import GradleScript.TestFixtures.ProjectDSL.*
+import org.junit.jupiter.api.io.TempDir
 import java.io.File
 
-interface ProjectDSLContext: BaseContextTest {
+interface ProjectDSLContext: BaseTest {
 	var projectDir: File
-	var currentProject: Project?
+	val currentProject: Project?
+		get() = __test_storage_get("currentProject")
 	val currentProjectDir: File
 		get() = currentProject?.directory ?: projectDir
 
@@ -16,11 +18,11 @@ interface ProjectDSLContext: BaseContextTest {
 		val rootProject = RootProject(rootProjectDir, name, builds)
 		val oldCurrentProject = currentProject
 		try {
-			currentProject = rootProject
+			__test_storage_set("currentProject", rootProject)
 			DefaultRootProjectDSL(rootProject).expression()
 			return rootProject
 		} finally {
-			currentProject = oldCurrentProject
+			__test_storage_set("currentProject", oldCurrentProject)
 		}
 	}
 	fun <T> ProjectDSL<*, *, *, *>.withProject(name: String = "Project_${randomString()}", expression: DefaultProjectDSLExpression<T>): Project {
@@ -34,11 +36,11 @@ interface ProjectDSLContext: BaseContextTest {
 		parent.children += project
 		val oldCurrentProject = currentProject
 		try {
-			currentProject = project
+			__test_storage_set("currentProject", project)
 			DefaultProjectDSL(project).expression()
 			return project
 		} finally {
-			currentProject = oldCurrentProject
+			__test_storage_set("currentProject", oldCurrentProject)
 		}
 	}
 	fun RootProjectDSL<*, *, *, *>.withDefaultSettingsSource() {

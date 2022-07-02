@@ -1,8 +1,8 @@
 package GradleScript.IntegrationTest
 
-import GradleScript.TestFixtures.BaseContextTest
+import GradleScript.TestFixtures.BaseTest
 import GradleScript.TestFixtures.FileDSLContext
 
-abstract class BaseIntegrationTest: BaseContextTest, FileDSLContext {
-
+abstract class BaseIntegrationTest: BaseTest, FileDSLContext {
+	override val __test_storage = mutableMapOf<Any?, Any?>()
 }
