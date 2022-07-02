@@ -6,6 +6,7 @@ import GradleScript.TestFixtures.KotlinClosureDSL.DefaultKotlinClosureDSL
 import GradleScript.TestFixtures.KotlinClosureDSL.DefaultKotlinClosureDSLExpression
 import GradleScript.TestFixtures.KotlinClosureDSL.DefaultMockKotlinClosureDSL
 import GradleScript.TestFixtures.KotlinClosureDSL.DefaultMockKotlinClosureDSLExpression
+import GradleScript.TestFixtures.Tests.BaseTest
 
 interface KotlinClosureDSLContext: BaseTest {
 	fun <T> withKotlinClosure(closure: KotlinClosure, expression: DefaultKotlinClosureDSLExpression<T>): T {

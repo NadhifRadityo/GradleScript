@@ -2,12 +2,16 @@ package GradleScript.TestFixtures
 
 import GradleScript.Strategies.FileUtils.file
 import GradleScript.Strategies.StringUtils.randomString
+import GradleScript.TestFixtures.Extensions.TempDirSetter
 import GradleScript.TestFixtures.ProjectDSL.*
-import org.junit.jupiter.api.io.TempDir
+import GradleScript.TestFixtures.Tests.BaseTest
 import java.io.File
 
 interface ProjectDSLContext: BaseTest {
+	@set:TempDirSetter
 	var projectDir: File
+		get() = __test_storage_get_late_init("projectDir")
+		set(value) = __test_storage_set("projectDir", value)
 	val currentProject: Project?
 		get() = __test_storage_get("currentProject")
 	val currentProjectDir: File
