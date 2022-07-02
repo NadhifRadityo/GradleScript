@@ -1,11 +1,11 @@
 package GradleScript.FunctionalTest
 
 import GradleScript.Strategies.StringUtils.countOccurrences
-import GradleScript.Strategies.StringUtils.randomString
+import GradleScript.TestFixtures.RandomDSLContext
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
-class DynamicScriptingTest: BaseFunctionalGradleTest() {
+class DynamicScriptingTest: BaseFunctionalGradleTest(), RandomDSLContext {
 
 	@Test
 	fun `import script ()`() {

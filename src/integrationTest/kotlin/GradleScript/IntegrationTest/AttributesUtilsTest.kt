@@ -1,33 +1,42 @@
 package GradleScript.IntegrationTest
 
+import GradleScript.Strategies.AttributesUtils
 import GradleScript.Strategies.AttributesUtils.a_getBoolean
 import GradleScript.Strategies.AttributesUtils.a_getByte
 import GradleScript.Strategies.AttributesUtils.a_getChar
 import GradleScript.Strategies.AttributesUtils.a_getDouble
-import GradleScript.Strategies.AttributesUtils.a_getFile
-import GradleScript.Strategies.AttributesUtils.a_getFiles
 import GradleScript.Strategies.AttributesUtils.a_getFloat
 import GradleScript.Strategies.AttributesUtils.a_getInt
 import GradleScript.Strategies.AttributesUtils.a_getLong
 import GradleScript.Strategies.AttributesUtils.a_getObject
 import GradleScript.Strategies.AttributesUtils.a_getString
+import GradleScript.Strategies.AttributesUtils.a_setBoolean
+import GradleScript.Strategies.AttributesUtils.a_setByte
+import GradleScript.Strategies.AttributesUtils.a_setChar
+import GradleScript.Strategies.AttributesUtils.a_setDouble
+import GradleScript.Strategies.AttributesUtils.a_setFloat
+import GradleScript.Strategies.AttributesUtils.a_setInt
+import GradleScript.Strategies.AttributesUtils.a_setLong
+import GradleScript.Strategies.AttributesUtils.a_setObject
+import GradleScript.Strategies.AttributesUtils.a_setString
 import GradleScript.Strategies.AttributesUtils.attributeKey
 import GradleScript.Strategies.AttributesUtils.attributeKeyHash
 import GradleScript.Strategies.FileUtils.file
 import GradleScript.Strategies.JSONUtils.fromJson
 import GradleScript.Strategies.JSONUtils.toJson
 import GradleScript.Strategies.RuntimeUtils.JAVA_DETECTION_VERSION
-import GradleScript.Strategies.StringUtils.randomString
+import GradleScript.TestFixtures.RandomDSLContext
+import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.jar.Attributes
 
-class AttributesUtilsTest: BaseIntegrationTest() {
+class AttributesUtilsTest: BaseIntegrationTest(), RandomDSLContext {
 
 	@Test
 	fun `can compute key hashcode insensitively`() {
-		val testKey = "ExAMplE-AtTRiBuTe-KeY"
-		val testKey2 = "AnOtHEr-KEY"
+		val testKey = "ExAMplE-AtTRiBuTe-KeY-${randomString()}"
+		val testKey2 = "AnOtHEr-KEY-${randomString(10)}"
 		if(JAVA_DETECTION_VERSION <= 8) {
 			assertEquals(attributeKeyHash(testKey), testKey.lowercase().hashCode())
 			assertEquals(attributeKeyHash(testKey2), testKey2.lowercase().hashCode())
@@ -50,102 +59,121 @@ class AttributesUtilsTest: BaseIntegrationTest() {
 		lateinit var array: Array<String>
 		var obj: Int = 0
 	}
-	fun prepareAttribute(): Attributes {
-		val attribute = Attributes()
-		val jsonObject = DefaultObjectJSONRoot()
-		jsonObject.array = arrayOf("string1", "string2")
-		jsonObject.obj = 2
-		attribute.putValue("object", toJson(jsonObject))
-		attribute.putValue("string", "string")
-		attribute.putValue("file", file("test/testDir/testFile.txt").canonicalPath)
-		attribute.putValue("files", listOf(file("test/testDir/testFile.txt"), file("test/testDir2/testFile2.txt")).map { it.canonicalPath }.joinToString(";"))
-		attribute.putValue("byte", Byte.MAX_VALUE.toString())
-		attribute.putValue("boolean", "true")
-		attribute.putValue("char", Char.MAX_VALUE.toString())
-		attribute.putValue("int", Int.MAX_VALUE.toString())
-		attribute.putValue("long", Long.MAX_VALUE.toString())
-		attribute.putValue("float", Float.MAX_VALUE.toString())
-		attribute.putValue("double", Double.MAX_VALUE.toString())
-		return attribute
-	}
 
 	@Test
-	fun `can get attribute object`() {
-		val attribute = prepareAttribute()
+	fun `can set and get attribute object`() {
+		val attribute = Attributes()
+		val jsonObject = DefaultObjectJSONRoot()
+		jsonObject.array = (0..5).map { randomString() }.toTypedArray()
+		jsonObject.obj = nextInt()
+		a_setObject(attribute, "object", jsonObject, { toJson(it) })
+
 		val obj = a_getObject(attribute, "object", { fromJson(it, DefaultObjectJSONRoot::class.java) })!!
-		assertEquals("string1", obj.array[0])
-		assertEquals("string2", obj.array[1])
-		assertEquals(2, obj.obj)
+		assertArrayEquals(jsonObject.array, obj.array)
+		assertEquals(jsonObject.obj, obj.obj)
 	}
 	
 	@Test
-	fun `can get attribute string`() {
-		val attribute = prepareAttribute()
-		val obj = a_getString(attribute, "string")!!
-		assertEquals("string", obj)
+	fun `can set and get attribute string`() {
+		val attribute = Attributes()
+		val string = randomString(20)
+		a_setString(attribute, "string", string)
+
+		val obj = a_getString(attribute, "string")
+		assertEquals(string, obj)
 	}
 	
 	@Test
 	fun `can get attribute file`() {
-		val attribute = prepareAttribute()
-		val obj = a_getFile(attribute, "file")!!
-		assertEquals(file("test/testDir/testFile.txt").canonicalFile, obj)
+		val attribute = Attributes()
+		val file = file("test/testDir${randomString(5)}/testFile${randomString(10)}.txt")
+		a_setObject(attribute, "file", file, AttributesUtils.file_to_string)
+		
+		val obj = a_getObject(attribute, "file", AttributesUtils.string_to_file)!!
+		assertEquals(file.canonicalFile, obj.canonicalFile)
 	}
 	
 	@Test
 	fun `can get attribute files`() {
-		val attribute = prepareAttribute()
-		val obj = a_getFiles(attribute, "files")!!
-		assertEquals(file("test/testDir/testFile.txt").canonicalFile, obj[0])
-		assertEquals(file("test/testDir2/testFile2.txt").canonicalFile, obj[1])
+		val attribute = Attributes()
+		val files = listOf(
+			file("test/testDir${randomString(5)}/testFile${randomString(10)}.txt"),
+			file("test/testDir${randomString(5)}/testFile${randomString(10)}.txt")
+		)
+		a_setObject(attribute, "files", files, AttributesUtils.files_to_string)
+		
+		val obj = a_getObject(attribute, "files", AttributesUtils.string_to_files)!!
+		assertEquals(files[0].canonicalFile, obj[0].canonicalFile)
+		assertEquals(files[1].canonicalFile, obj[1].canonicalFile)
 	}
 	
 	@Test
 	fun `can get attribute byte`() {
-		val attribute = prepareAttribute()
+		val attribute = Attributes()
+		val byte = nextInt().toByte()
+		a_setByte(attribute, "byte", byte)
+
 		val obj = a_getByte(attribute, "byte")
-		assertEquals(Byte.MAX_VALUE, obj)
+		assertEquals(byte, obj)
 	}
 	
 	@Test
 	fun `can get attribute boolean`() {
-		val attribute = prepareAttribute()
+		val attribute = Attributes()
+		val boolean = nextBoolean()
+		a_setBoolean(attribute, "boolean", boolean)
+		
 		val obj = a_getBoolean(attribute, "boolean")
-		assertEquals(true, obj)
+		assertEquals(boolean, obj)
 	}
 
 	@Test
 	fun `can get attribute char`() {
-		val attribute = prepareAttribute()
+		val attribute = Attributes()
+		val char = nextInt().toChar()
+		a_setChar(attribute, "char", char)
+		
 		val obj = a_getChar(attribute, "char")
-		assertEquals(Char.MAX_VALUE, obj)
+		assertEquals(char, obj)
 	}
 
 	@Test
 	fun `can get attribute int`() {
-		val attribute = prepareAttribute()
+		val attribute = Attributes()
+		val int = nextInt()
+		a_setInt(attribute, "int", int)
+		
 		val obj = a_getInt(attribute, "int")
-		assertEquals(Int.MAX_VALUE, obj)
+		assertEquals(int, obj)
 	}
 
 	@Test
 	fun `can get attribute long`() {
-		val attribute = prepareAttribute()
+		val attribute = Attributes()
+		val long = nextLong()
+		a_setLong(attribute, "long", long)
+		
 		val obj = a_getLong(attribute, "long")
-		assertEquals(Long.MAX_VALUE, obj)
+		assertEquals(long, obj)
 	}
 
 	@Test
 	fun `can get attribute float`() {
-		val attribute = prepareAttribute()
+		val attribute = Attributes()
+		val float = nextFloat()
+		a_setFloat(attribute, "float", float)
+		
 		val obj = a_getFloat(attribute, "float")
-		assertEquals(Float.MAX_VALUE, obj)
+		assertEquals(float, obj)
 	}
 
 	@Test
 	fun `can get attribute double`() {
-		val attribute = prepareAttribute()
+		val attribute = Attributes()
+		val double = nextDouble()
+		a_setDouble(attribute, "double", double)
+		
 		val obj = a_getDouble(attribute, "double")
-		assertEquals(Double.MAX_VALUE, obj)
+		assertEquals(double, obj)
 	}
 }
